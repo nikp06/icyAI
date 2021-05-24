@@ -1,4 +1,5 @@
 import pygame
+# import time
 from pygame.locals import *
 import numpy as np
 import random
@@ -52,17 +53,39 @@ wall_height1 = 0
 wall_height2 = -SCREEN_MAX
 
 
-class IcyTowerGame:
+class IcyTowerGameAI:
 
     def __init__(self):
-        # self.SCREEN_MAX = SCREEN_MAX
-        # init display
-        # self.SCREEN = pygame.display.set_mode((self.SCREEN_MAX, self.SCREEN_MAX), 0, 32)
         pygame.display.set_caption('IcyTower by NikP')
         self.mainClock = pygame.time.Clock()
         # initialized objects
-        self.player = Player(100, SCREEN_MAX - SCALE9 - SCALE9)
-        self.tiles = [Tile(0, SCREEN_MAX - SCALE9, SCREEN_MAX)]
+        self.reset()
+        # self.player = Player(100, SCREEN_MAX - SCALE9 - SCALE9)
+        # # initialize game state for first movement
+        # self.player.right = True
+        # self.tiles = [Tile(0, SCREEN_MAX - SCALE9, SCREEN_MAX)]
+        # self.walls = [Wall('left'), Wall('right')]
+        # # initialized variables
+        # self.drop = False
+        # self.level = 0
+        # self.timesince = 0
+        # self.score = 0
+        # self.stars = 0
+        # self.start_time = 0
+        # self.particles_drop_vel = []
+        # self.star_list = []
+        # self.colors = []
+
+    def reset(self):
+        pygame.display.set_caption('IcyTower by NikP')
+        self.mainClock = pygame.time.Clock()
+        # initialized objects
+        self.player = Player(200, SCREEN_MAX - SCALE9 - SCALE9)
+        # initialize game state for first movement
+        self.player.right = True
+        # self.tiles = [Tile(0, SCREEN_MAX - SCALE9, SCREEN_MAX)]
+        self.tiles = [Tile(100, SCREEN_MAX - SCALE9, 200)]
+        self.update_tiles()
         self.walls = [Wall('left'), Wall('right')]
         # initialized variables
         self.drop = False
@@ -74,8 +97,10 @@ class IcyTowerGame:
         self.particles_drop_vel = []
         self.star_list = []
         self.colors = []
+        self.frame_iteration = 0
+        # self.frame_iteration2
 
-    def play_step(self):
+    def play_step(self, action):
         # DROPPING EVERYTHING ON SCREEN & TIMER [drop_all]
         if self.drop is False:
             if int(pygame.time.get_ticks() / 1000) == 10 or self.player.rect.y <= SCALE13:
@@ -88,11 +113,15 @@ class IcyTowerGame:
                 self.level += 1
 
         # CHECK IF GAME OVER
+        reward = 0
         game_over_state = False
-        if self.player.rect.y >= SCREEN_MAX - self.player.PLAYER_HEIGHT:
+        self.frame_iteration += 1
+        # self.frame_iteration2 += 1
+        if self.player.rect.y >= SCREEN_MAX - self.player.PLAYER_HEIGHT or self.frame_iteration > 500:
             self.score += self.player.combo_floors ** 2 * 10  # take out maybe because of ai
             game_over_state = True
-            return game_over_state, self.score
+            reward = -50
+            return reward, game_over_state, self.score
             # break
 
         # GET KEYBOARD INPUT [listen]
@@ -114,15 +143,33 @@ class IcyTowerGame:
             self.player.old_floor = self.player.current_floor
         if wall_collisions:
             self.player.switch = True
+        if self.player.current_floor > self.player.old_floor:
+            # self.frame_iteration = 0
+            reward = 10*(self.player.current_floor-self.player.old_floor)
+        elif self.player.current_floor < self.player.old_floor:
+            # self.frame_iteration = 0
+            reward = 10 * (self.player.current_floor - self.player.old_floor)
+
+        if self.player.current_floor > self.player.highest_floor:
+            self.player.highest_floor = self.player.current_floor
+            self.frame_iteration = 0
 
         # PERFORMING MOVEMENT ACCORDING TO INPUT AND TO COLLISIONS
-        self.player.move()
+        # print(action)
+        self.player.move(action)
+        if self.player.jump is True:
+            self.player.jump = False
+        # self.player.jump = False
+        # self.player.right = False
+        # self.player.left = False
 
         # REMOVE OLD TILES AND GENERATE NEW ONES IF NECESSARY
         self.update_tiles()
 
         # UPDATING THE SCORE
-        self.update_score()
+        # self.update_score()
+        # print(self.score)
+        self.score = self.player.current_floor*10
 
         # DRAW EVERYTHING TO THE SCREEN
         self.draw_window()
@@ -144,7 +191,7 @@ class IcyTowerGame:
         self.mainClock.tick(60)
 
         # RETURN GAME_OVER AND SCORE
-        return game_over_state, self.score
+        return reward, game_over_state, self.score
 
     def drop_all(self):
         if 0 < self.player.rect.y <= SCREEN_MAX / 10:
@@ -173,21 +220,23 @@ class IcyTowerGame:
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN:
-                if event.key == K_RIGHT:
-                    self.player.right = True
-                if event.key == K_LEFT:
-                    self.player.left = True
-                if event.key == K_SPACE:  # and player.falling is False:
-                    self.player.jump = True
 
-            if event.type == KEYUP:
-                if event.key == K_RIGHT:
-                    self.player.right = False
-                if event.key == K_LEFT:
-                    self.player.left = False
-                if event.key == K_SPACE:
-                    self.player.jump = False
+        # print(self.player.jump)
+            # if event.type == KEYDOWN:
+            #     if event.key == K_RIGHT:
+            #         self.player.right = True
+            #     if event.key == K_LEFT:
+            #         self.player.left = True
+            #     if event.key == K_SPACE:  # and player.falling is False:
+            #         self.player.jump = True
+            #
+            # if event.type == KEYUP:
+            #     if event.key == K_RIGHT:
+            #         self.player.right = False
+            #     if event.key == K_LEFT:
+            #         self.player.left = False
+            #     if event.key == K_SPACE:
+            #         self.player.jump = False
 
     def collision_check(self):
         tile_collisions = []
@@ -206,7 +255,7 @@ class IcyTowerGame:
             del self.tiles[0]
             self.player.floors_passed += 1
         # adding tiles procedurally if necessary
-        if len(self.tiles) <= 10:
+        while len(self.tiles) <= 10:
             tile_diff = self.tiles[-1].rect.top - 100  # scale10
             # checkpoint floors_passed (each 50th)
             if (self.player.floors_passed + len(self.tiles) + 1) % 50 == 1:
@@ -245,7 +294,6 @@ class IcyTowerGame:
                     self.player.combo_floors = 0
             self.player.combo_added = True
             self.score += add_score
-        # return score
 
     def draw_window(self):
         SCREEN.fill((0, 0, 0))
@@ -287,7 +335,6 @@ class IcyTowerGame:
             self.star_list = self.star_list[:-1]
             self.particles_drop_vel = self.particles_drop_vel[:-1]
             self.colors = self.colors[:-1]
-        # return star_list, particles_drop_vel, colors
 
     def drop_particles(self):
         for idx, vel in enumerate(self.particles_drop_vel):
@@ -297,7 +344,6 @@ class IcyTowerGame:
             for pair in star:
                 pair_list.append((pair[0], pair[1] + self.particles_drop_vel[idx]))
             self.star_list[idx] = pair_list
-        # return star_list, drop_vel
 
 
 # player class
@@ -342,7 +388,17 @@ class Player(pygame.sprite.Sprite):
         if self.bonus_y == 17:
             self.tilting = True
 
-    def move(self):
+    def move(self, action):
+        movements = [self.left, self.right, self.jump]
+        # if action[0] == 1:
+        #     # print("do nothing")
+        if action[1] == 1:  # change direction
+            self.left = not self.left
+            self.right = not self.right
+        elif action[2] == 1:  # jump
+            self.jump = True
+
+
         # IN X DIRECTION:
         # VELOCITY ADJUSTMENT IN X
         if self.switch is False:
@@ -427,54 +483,6 @@ class Player(pygame.sprite.Sprite):
         if self.tilting is True:
             self.tilt += self.ROTATION
 
-    # def update_score(self, score):
-    #     add_score = 0
-    #     if self.jump is True:
-    #         self.combo_added = False
-    #     if self.on_floor is True:
-    #         if self.current_floor > self.old_floor:
-    #             if self.current_floor > self.highest_floor:
-    #                 self.highest_floor = self.current_floor
-    #                 add_score = (self.current_floor - self.old_floor) * 10
-    #             else:
-    #                 add_score = 0
-    #             if (self.current_floor - self.old_floor) > 1:
-    #                 self.combo = True
-    #                 if self.combo_added is False:
-    #                     self.combo_floors += self.current_floor - self.old_floor
-    #             else:
-    #                 if self.combo is True:
-    #                     score += self.combo_floors ** 2 * 10
-    #                 self.combo = False
-    #                 self.combo_floors = 0
-    #         elif self.current_floor < self.old_floor:
-    #             if self.combo is True:
-    #                 self.combo = False
-    #                 score += self.combo_floors ** 2 * 10
-    #                 self.combo_floors = 0
-    #         self.combo_added = True
-    #         score += add_score
-    #     return score
-
-    # particle creation at current player position (rather make an own class for particles and pass player to it)
-    # def add_particles(self, star_list, particles_drop_vel, colors):
-    #     add_x = self.rect.x + random.randint(0, int(self.PLAYER_WIDTH))
-    #     add_y = self.rect.y + self.PLAYER_HEIGHT
-    #     pointlist = [(8.25, 7.55), (10.0, 1.0), (11.75, 7.55), (18.55, 7.2), (12.85, 10.95), (15.3, 17.3),
-    #                  (10.0, 13.0), (4.7, 17.3), (7.15, 10.95), (1.45, 7.2)]
-    #
-    #     for idx, item in enumerate(pointlist):
-    #         pointlist[idx] = (item[0] + add_x, item[1] + add_y)
-    #
-    #     star_list[0:0] = [pointlist]
-    #     particles_drop_vel.insert(0, -2)
-    #     colors.insert(0, random.choice(PALETTE))
-    #     if star_list[-1][0][1] > SCREEN_MAX + 50:
-    #         star_list = star_list[:-1]
-    #         particles_drop_vel = particles_drop_vel[:-1]
-    #         colors = colors[:-1]
-    #     return star_list, particles_drop_vel, colors
-
     # drawing function for the player
     def draw(self):
         if self.tilting is True:
@@ -530,14 +538,46 @@ class Tile(pygame.sprite.Sprite):
             SCREEN.blit(image, (self.rect.x+i*self.width, self.rect.y))
             image = pygame.transform.flip(image, True, False)
 
-
-if __name__ == '__main__':
-    game = IcyTowerGame()
-    # game loop
-    while True:
-        game_over, score = game.play_step()
-
-        if game_over is True:
-            break
-
-    print('Final Score ', score)
+#
+# if __name__ == '__main__':
+#     game = IcyTowerGameAI()
+#     # game loop
+#     i = 1
+#     a = 0
+#     b = 0
+#     while True:
+#         # print(i)
+#         if i % 100 == 0:
+#             a = random.randint(0,2)
+#             b = 1
+#         elif i % 40:
+#             if b == 1:
+#                 b = 0
+#             else:
+#                 b = 1
+#         if b == 1:
+#             print("change dir")
+#         if a == 0:
+#             print("jumping")
+#             reward, game_over, score = game.play_step([b, 1])
+#         else:
+#
+#             reward, game_over, score = game.play_step([b, 0])
+#
+#
+#         #
+#         #
+#         #     reward, game_over, score = game.play_step([1, 0, 0])
+#         # elif a == 2:
+#         #     reward, game_over, score = game.play_step([0, 1, 0])
+#         # print(reward)
+#
+#
+#
+#         i += 1
+#
+#         # print("loop")
+#         if game_over is True:
+#             break
+#
+#     print('Final Score ', score)
