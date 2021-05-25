@@ -6,22 +6,24 @@ from gameAI import IcyTowerGameAI, Player, Tile, Wall
 from model import Linear_QNet, QTrainer
 from helper import plot
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
+MAX_MEMORY = 100_000 # TODO: ändern
+BATCH_SIZE = 1000 # TODO: ändern
+LR = 0.001 # TODO: ändern
 
 class Agent:
 
     def __init__(self):
         self.n_games = 0
         self.epsilon = 0  # randomness
-        self.gamma = 0.9  # discount rate (play around with it; smaller than one; try .8)
+        self.gamma = 0.8  # discount rate (play around with it; smaller than one; try .8)
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft automatically if exceeds memory
-        self.model = Linear_QNet(37, 256, 3)
+        self.model = Linear_QNet(4, 256, 3)  # TODO: ändern in 37 input
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         # TODO: model, trainer
 
     def get_state(self, game):
+        # TODO: noch onfloor oder nicht, damit er checkt, dass er nicht springen soll, wenn in der Luft
+        # TODO: noch bonusy damit er checkt bei welchem momentum gesprungen werden soll
         # player details
         x = game.player.rect.x
         y = game.player.rect.y
@@ -31,13 +33,13 @@ class Agent:
         state = [x, y, vel_x, vel_y]
         # tile details
         # print(len(game.tiles))
-        for tile in game.tiles:
-            state.append(tile.rect.x)
-            state.append(tile.rect.y)
-            state.append(tile.tile_width)
+        # for tile in game.tiles:  # TODO: wieder reinnehmen
+        #     state.append(tile.rect.x)
+        #     state.append(tile.rect.y)
+        #     state.append(tile.tile_width)
         # print(state)
 
-        return np.array(state, dtype=int)
+        return np.array(state, dtype=int) # TODO: ändern (vielleicht besser nicht als int?)
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))  # popleft if max memory is reached
@@ -56,10 +58,10 @@ class Agent:
 
     def get_action(self, state):
         # random moves for tradeoff between exploration and exploitation
-        self.epsilon = 80 - self.n_games
+        self.epsilon = 80 - self.n_games # TODO: ändern (randomness)
         final_move = [0, 0, 0]
         # if epsilon negative no random moves anymore
-        if random.randint(0, 200) < self.epsilon:
+        if random.randint(0, 200) < self.epsilon: # TODO: ändern
             move = random.randint(0, 2)
             final_move[move] = 1
         else:

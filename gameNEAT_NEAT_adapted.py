@@ -3,10 +3,12 @@ import pygame
 from pygame.locals import *
 import numpy as np
 import random
+import neat
 import sys
+import os
 
 # screen resolution and scaling
-SCREEN_MAX = 900  # 600, 700, 800, 900, 1000
+SCREEN_MAX = 700  # 600, 700, 800, 900, 1000
 SCALE1 = SCREEN_MAX * 1 / 500  # 2 vel_x
 SCALE2 = SCREEN_MAX * 1 / 250  # 4 bonus y 1
 SCALE3 = SCREEN_MAX * 3 / 500  # 6 vel_x threshold for bonus y 1
@@ -52,12 +54,32 @@ WALL_LEFT_FLIP = pygame.transform.flip(WALL_LEFT, False, True)
 wall_height1 = 0
 wall_height2 = -SCREEN_MAX
 
+def main(genomes, config):
+    # nets = []
+    # ge = []
+    # players = []
+    #
+    # for _, g in genomes:
+    #     net = neat.nn.FeedForwardNetwork(g, config)
+    #     nets.append(net)
+    #     players.append(Player(100, SCREEN_MAX - SCALE9 - SCALE9))
+    #     g.fitness = 0
+    #     ge.append(g)
+    game = IcyTowerGameAI(genomes, config)
+    while True:
+        game.play_step()
+        if len(game.players) == 0:
+            print(game.false_count)
+            break
+
 
 class IcyTowerGameAI:
 
-    def __init__(self):
+    def __init__(self, genomes, config):
         pygame.display.set_caption('IcyTower by NikP')
         self.mainClock = pygame.time.Clock()
+        self.genomes = genomes
+        self.config = config
         # initialized objects
         self.reset()
         # self.player = Player(100, SCREEN_MAX - SCALE9 - SCALE9)
@@ -80,88 +102,142 @@ class IcyTowerGameAI:
         pygame.display.set_caption('IcyTower by NikP')
         self.mainClock = pygame.time.Clock()
         # initialized objects
-        self.player = Player(200, SCREEN_MAX - SCALE9 - SCALE9)
+        self.nets = []
+        self.ge = []
+        self.players = []
+
+        for _, g in self.genomes:
+            net = neat.nn.FeedForwardNetwork.create(g, self.config)
+            self.nets.append(net)
+            self.players.append(Player(100, SCREEN_MAX - SCALE9 - SCALE9))
+            g.fitness = 0  # TODO: maybe wrong
+            self.ge.append(g)
         # initialize game state for first movement
-        self.player.right = True
+        for player in self.players:
+            player.right = True
         # self.tiles = [Tile(0, SCREEN_MAX - SCALE9, SCREEN_MAX)]
         # for start_tile
         # self.tiles = [Tile(100, SCREEN_MAX - SCALE9, 200)]  # TODO: zurückändern
         self.tiles = [Tile(0, SCREEN_MAX - SCALE9, SCREEN_MAX)]
-
+        self.floors_passed = 0
         self.update_tiles()
         self.walls = [Wall('left'), Wall('right')]
         # initialized variables
         self.drop = False
         self.level = 0
+        self.drop_speed = self.level
         self.timesince = 0
         self.score = 0
         self.stars = 0
         self.start_time = 0
+        self.highest_floor = 0
+        self.false_count = 0
+        # self.max_height = SCREEN_MAX
+
         self.particles_drop_vel = []
         self.star_list = []
         self.colors = []
         self.frame_iteration = 0
         # self.frame_iteration2
 
-    def play_step(self, action):
+    def play_step(self):
+        self.frame_iteration += 1
+        # print(self.drop_speed)
+        # self.drop_speed = self.level
         # DROPPING EVERYTHING ON SCREEN & TIMER [drop_all]
+        # print(self.max_height< SCREEN_MAX/2)
         if self.drop is False:
-            if int(pygame.time.get_ticks() / 1000) == 10 or self.player.rect.y <= SCALE13:
+            # print(self.frame_iteration)
+            if self.frame_iteration >= 500 or self.highest_floor > 2:  #int(pygame.time.get_ticks() / 1000) == 10 or self.highest_floor > 2:  # or self.max_height < SCREEN_MAX/2:
                 self.drop = True
                 self.start_time = pygame.time.get_ticks()
         else:
             self.drop_all()
-            self.timesince = int((pygame.time.get_ticks() - self.start_time - 5) / 1000)
+            self.timesince = int((pygame.time.get_ticks() - self.start_time - 10) / 1000)
             if self.timesince >= self.level * 5:  # TODO: zuückändern
                 self.level += 1
+                for g in self.ge:
+                    g.fitness += 100
 
+
+        self.listen()
         # CHECK IF GAME OVER
-        reward = 0
-        game_over_state = False
-        self.frame_iteration += 1
+        # reward = 0
+        # game_over_state = False
+        # self.frame_iteration += 1
         # self.frame_iteration2 += 1
-        if self.player.rect.y >= SCREEN_MAX - self.player.PLAYER_HEIGHT or self.frame_iteration > 500:
-            self.score += self.player.combo_floors ** 2 * 10  # take out maybe because of ai
-            game_over_state = True
-            reward = -50
-            return reward, game_over_state, self.score
+        tile_details = []
+        for tile in self.tiles:  # TODO: wieder reinnehmen
+            tile_details.append(tile.rect.x)
+            tile_details.append(tile.rect.y)
+            tile_details.append(tile.tile_width)
+
+        for x, player in enumerate(self.players):
+            if player.on_floor is True:
+                a = 1
+            else:
+                a = 0
+            action = self.nets[x].activate((player.rect.x, player.rect.y, player.vel_x, player.vel_y, a, *tile_details))
+
+            action_idx = action.index(max(action))
+            for i in range(len(action)):
+                if i == action_idx:
+                    action[i] = 1
+                else:
+                    action[i] = 0
+            if action[2] == 1 and a == 0:
+                self.false_count += 1
+                # print("FALSE!!!")
+            # print(self.false_count)
+            # print(action)
+
+            player.move(action)
+            if player.jump is True:
+                player.jump = False
+            self.ge[x].fitness += 0.1
+
+
+            if player.rect.y >= SCREEN_MAX - player.PLAYER_HEIGHT: # or self.frame_iteration > 500:
+                self.score += player.combo_floors ** 2 * 10  # take out maybe because of ai
+                self.players.pop(x)
+                self.ge[x].fitness -= 50
+                self.nets.pop(x)
+                self.ge.pop(x)
+            elif player.rect.y <= 0:
+                player.rect.top = 1
+            # elif player.rect.y < self.max_height:
+            #     self.max_height = player.rect.y
+                # game_over_state = True
+                # reward = -50
+                # return reward, game_over_state, self.score
+
             # break
 
         # GET KEYBOARD INPUT [listen]
-        self.listen()
+        # for player in self.players:
 
         # CHECKING FOR COLLISIONS [collision_check]
-        tile_collisions, wall_collisions = self.collision_check()
-        if tile_collisions:
-            for tile in tile_collisions:
-                if self.player.falling is True and self.player.rect.bottom - tile.rect.top < 21:
-                    self.player.current_floor = self.player.floors_passed + self.tiles.index(tile)
-                    self.player.on_floor = True
-                    self.player.tilting = False
-                    self.player.tilt = 0
-                    self.player.rect.bottom = tile.rect.top + 1
-                    self.player.current_height = tile.rect.top + 1
-        else:
-            self.player.on_floor = False
-            self.player.old_floor = self.player.current_floor
-        if wall_collisions:
-            self.player.switch = True
-        if self.player.current_floor > self.player.old_floor:
-            # self.frame_iteration = 0
-            reward = 10*(self.player.current_floor-self.player.old_floor)
-        elif self.player.current_floor < self.player.old_floor:
-            # self.frame_iteration = 0
-            reward = 10 * (self.player.current_floor - self.player.old_floor)
+            self.collision_check(player)
 
-        if self.player.current_floor > self.player.highest_floor:
-            self.player.highest_floor = self.player.current_floor
-            self.frame_iteration = 0
+        for x, player in enumerate(self.players):
+            if player.current_floor != player.old_floor:
+                self.ge[x].fitness += 10*(player.current_floor-player.old_floor)
+                # self.frame_iteration = 0
+                # reward = 10*(player.current_floor-player.old_floor)
+            # elif player.current_floor < player.old_floor:
+            #     self.g.fitness[x] -= 10
+                # self.frame_iteration = 0
+                # reward = 10 * (player.current_floor - player.old_floor)
 
-        # PERFORMING MOVEMENT ACCORDING TO INPUT AND TO COLLISIONS
-        # print(action)
-        self.player.move(action)
-        if self.player.jump is True:
-            self.player.jump = False
+            if player.current_floor > self.highest_floor:
+                self.highest_floor = player.current_floor
+                # frame_iteration = 0
+
+            # PERFORMING MOVEMENT ACCORDING TO INPUT AND TO COLLISIONS
+            # print(action)
+            # player.move(action)
+            # if player.jump is True:
+            #     player.jump = False
         # self.player.jump = False
         # self.player.right = False
         # self.player.left = False
@@ -172,20 +248,21 @@ class IcyTowerGameAI:
         # UPDATING THE SCORE
         # self.update_score()
         # print(self.score)
-        self.score = self.player.current_floor*10
+        # for player in self.players:
+        #     self.score = player.current_floor*10
 
         # DRAW EVERYTHING TO THE SCREEN
         self.draw_window()
 
-        # ADDING PARTICLES IF NECESSARY
-        if self.player.combo:
-            if self.stars % 2 == 0:
-                self.add_particles()
-            self.stars += 1
-        if self.star_list:
-            self.drop_particles()
-            for idx, star in enumerate(self.star_list):
-                pygame.draw.polygon(SCREEN, self.colors[idx], star)
+        # # ADDING PARTICLES IF NECESSARY
+        # if self.player.combo:
+        #     if self.stars % 2 == 0:
+        #         self.add_particles()
+        #     self.stars += 1
+        # if self.star_list:
+        #     self.drop_particles()
+        #     for idx, star in enumerate(self.star_list):
+        #         pygame.draw.polygon(SCREEN, self.colors[idx], star)
 
         # UPDATE THE SCREEN
         pygame.display.update()
@@ -194,16 +271,21 @@ class IcyTowerGameAI:
         self.mainClock.tick(60)
 
         # RETURN GAME_OVER AND SCORE
-        return reward, game_over_state, self.score
+        # return reward, game_over_state, self.score
 
     def drop_all(self):
-        if 0 < self.player.rect.y <= SCREEN_MAX / 10:
-            drop_speed = 8
-        elif self.player.rect.y <= 0:
-            drop_speed = 15
-        else:
-            drop_speed = self.level
-        self.player.rect.y += drop_speed
+        # print(self.max_height)
+        drop_speed = self.level
+        # for player in self.players:
+        #     if 0 < player.rect.y <= SCREEN_MAX / 10:
+        #         drop_speed = 8
+        #     elif player.rect.y <= 0:
+        #         drop_speed = 15
+        #         continue
+            # else:
+            #     drop_speed = self.level
+        for player in self.players:
+            player.rect.y += drop_speed
         for tile in self.tiles:
             tile.rect.y += drop_speed
 
@@ -224,83 +306,88 @@ class IcyTowerGameAI:
                 pygame.quit()
                 sys.exit()
 
-        # print(self.player.jump)
-            # if event.type == KEYDOWN:
-            #     if event.key == K_RIGHT:
-            #         self.player.right = True
-            #     if event.key == K_LEFT:
-            #         self.player.left = True
-            #     if event.key == K_SPACE:  # and player.falling is False:
-            #         self.player.jump = True
-            #
-            # if event.type == KEYUP:
-            #     if event.key == K_RIGHT:
-            #         self.player.right = False
-            #     if event.key == K_LEFT:
-            #         self.player.left = False
-            #     if event.key == K_SPACE:
-            #         self.player.jump = False
 
-    def collision_check(self):
+    def collision_check(self, player):
+
+        # for player in self.players:
         tile_collisions = []
-        wall_collisions = []
+        # wall_collisions = []
         for tile in self.tiles:
-            if self.player.rect.colliderect(tile):
+            if player.rect.colliderect(tile):
                 tile_collisions.append(tile)
-        for wall in self.walls:
-            if self.player.rect.colliderect(wall):
-                wall_collisions.append(wall)
-        return tile_collisions, wall_collisions
+        # for wall in self.walls:
+        #     if player.rect.colliderect(wall):
+        #         wall_collisions.append(wall)
+        if (player.rect.x <= WALL_WIDTH) or (player.rect.x+player.PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
+            player.switch = True
+
+        if tile_collisions:
+            for tile in tile_collisions:
+                if player.falling is True and player.rect.bottom - tile.rect.top < 21:
+                    player.current_floor = self.floors_passed + self.tiles.index(tile)
+                    player.on_floor = True
+                    player.tilting = False
+                    player.tilt = 0
+                    player.rect.bottom = tile.rect.top + 1
+                    player.current_height = tile.rect.top + 1
+        else:
+            player.on_floor = False
+            player.old_floor = player.current_floor
+
+        # if wall_collisions:
+        #     player.switch = True
+        # return tile_collisions, wall_collisions
 
     def update_tiles(self):
         # removing tiles that are out of bounds
         if self.tiles[0].rect.top >= SCREEN_MAX:
             del self.tiles[0]
-            self.player.floors_passed += 1
+            self.floors_passed += 1
+            for player in self.players:
+                player.score = player.current_floor * 10
         # adding tiles procedurally if necessary
         while len(self.tiles) <= 10:
             tile_diff = self.tiles[-1].rect.top - 100  # scale10
-            self.tiles.append(
-                    Tile(0, tile_diff,
-                         SCREEN_MAX))
-            # TODO: zurückändern
+            # self.tiles.append(
+            #         Tile(0, tile_diff,
+            #              SCREEN_MAX))
             # checkpoint floors_passed (each 50th)
-            # if (self.player.floors_passed + len(self.tiles) + 1) % 50 == 1:
-            #     self.tiles.append(Tile(SCALE9, tile_diff, SCALE15))
-            # # normal floors_passed
-            # else:
-            #     tile_width = random.randint(int(SCALE11), int(SCALE12))
-            #     self.tiles.append(
-            #         Tile(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - WALL_WIDTH - tile_width)), tile_diff,
-            #              tile_width))
+            if (self.floors_passed + len(self.tiles) + 1) % 50 == 1:
+                self.tiles.append(Tile(SCALE9, tile_diff, SCALE15))
+            # normal floors_passed
+            else:
+                tile_width = random.randint(int(SCALE11), int(SCALE12))
+                self.tiles.append(
+                    Tile(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - WALL_WIDTH - tile_width)), tile_diff,
+                         tile_width))
 
-    def update_score(self):
-        add_score = 0
-        if self.player.jump is True:
-            self.player.combo_added = False
-        if self.player.on_floor is True:
-            if self.player.current_floor > self.player.old_floor:
-                if self.player.current_floor > self.player.highest_floor:
-                    self.player.highest_floor = self.player.current_floor
-                    add_score = (self.player.current_floor - self.player.old_floor) * 10
-                else:
-                    add_score = 0
-                if (self.player.current_floor - self.player.old_floor) > 1:
-                    self.player.combo = True
-                    if self.player.combo_added is False:
-                        self.player.combo_floors += self.player.current_floor - self.player.old_floor
-                else:
-                    if self.player.combo is True:
-                        self.score += self.player.combo_floors ** 2 * 10
-                    self.player.combo = False
-                    self.player.combo_floors = 0
-            elif self.player.current_floor < self.player.old_floor:
-                if self.player.combo is True:
-                    self.player.combo = False
-                    self.score += self.player.combo_floors ** 2 * 10
-                    self.player.combo_floors = 0
-            self.player.combo_added = True
-            self.score += add_score
+    # def update_score(self):
+    #     add_score = 0
+    #     if self.player.jump is True:
+    #         self.player.combo_added = False
+    #     if self.player.on_floor is True:
+    #         if self.player.current_floor > self.player.old_floor:
+    #             if self.player.current_floor > self.player.highest_floor:
+    #                 self.player.highest_floor = self.player.current_floor
+    #                 add_score = (self.player.current_floor - self.player.old_floor) * 10
+    #             else:
+    #                 add_score = 0
+    #             if (self.player.current_floor - self.player.old_floor) > 1:
+    #                 self.player.combo = True
+    #                 if self.player.combo_added is False:
+    #                     self.player.combo_floors += self.player.current_floor - self.player.old_floor
+    #             else:
+    #                 if self.player.combo is True:
+    #                     self.score += self.player.combo_floors ** 2 * 10
+    #                 self.player.combo = False
+    #                 self.player.combo_floors = 0
+    #         elif self.player.current_floor < self.player.old_floor:
+    #             if self.player.combo is True:
+    #                 self.player.combo = False
+    #                 self.score += self.player.combo_floors ** 2 * 10
+    #                 self.player.combo_floors = 0
+    #         self.player.combo_added = True
+    #         self.score += add_score
 
     def draw_window(self):
         SCREEN.fill((0, 0, 0))
@@ -310,47 +397,48 @@ class IcyTowerGameAI:
         for tile in self.tiles:
             tile.draw()
 
-        self.player.draw()
+        for player in self.players:
+            player.draw()
 
         for wall in self.walls:
             wall.draw()
 
         msg_time = 'Time: ' + str(self.timesince)
-        msg_combo = 'Combo ON - combo_floors: ' + str(self.player.combo_floors)
+        # msg_combo = 'Combo ON - combo_floors: ' + str(self.player.combo_floors)
         msg_score = 'Score: ' + str(self.score)
-        msg_floors = 'Floors climbed: ' + str(self.player.current_floor)
+        msg_floors = 'Floors climbed: ' + str(self.highest_floor)
 
         SCREEN.blit(FONT.render(msg_time, True, TEXT_COLOR), (60, 20))
         SCREEN.blit(FONT.render(msg_score, True, TEXT_COLOR), (60, 50))
         SCREEN.blit(FONT.render(msg_floors, True, TEXT_COLOR), (60, 80))
-        if self.player.combo:
-            SCREEN.blit(FONT.render(msg_combo, True, GREEN), (60, 110))
+        # if self.player.combo:
+        #     SCREEN.blit(FONT.render(msg_combo, True, GREEN), (60, 110))
 
-    def add_particles(self):
-        add_x = self.player.rect.x + random.randint(0, int(self.player.PLAYER_WIDTH))
-        add_y = self.player.rect.y + self.player.PLAYER_HEIGHT
-        pointlist = [(8.25, 7.55), (10.0, 1.0), (11.75, 7.55), (18.55, 7.2), (12.85, 10.95), (15.3, 17.3),
-                     (10.0, 13.0), (4.7, 17.3), (7.15, 10.95), (1.45, 7.2)]
+    # def add_particles(self):
+    #     add_x = self.player.rect.x + random.randint(0, int(self.player.PLAYER_WIDTH))
+    #     add_y = self.player.rect.y + self.player.PLAYER_HEIGHT
+    #     pointlist = [(8.25, 7.55), (10.0, 1.0), (11.75, 7.55), (18.55, 7.2), (12.85, 10.95), (15.3, 17.3),
+    #                  (10.0, 13.0), (4.7, 17.3), (7.15, 10.95), (1.45, 7.2)]
+    #
+    #     for idx, item in enumerate(pointlist):
+    #         pointlist[idx] = (item[0] + add_x, item[1] + add_y)
+    #
+    #     self.star_list[0:0] = [pointlist]
+    #     self.particles_drop_vel.insert(0, -2)
+    #     self.colors.insert(0, random.choice(PALETTE))
+    #     if self.star_list[-1][0][1] > SCREEN_MAX + 50:
+    #         self.star_list = self.star_list[:-1]
+    #         self.particles_drop_vel = self.particles_drop_vel[:-1]
+    #         self.colors = self.colors[:-1]
 
-        for idx, item in enumerate(pointlist):
-            pointlist[idx] = (item[0] + add_x, item[1] + add_y)
-
-        self.star_list[0:0] = [pointlist]
-        self.particles_drop_vel.insert(0, -2)
-        self.colors.insert(0, random.choice(PALETTE))
-        if self.star_list[-1][0][1] > SCREEN_MAX + 50:
-            self.star_list = self.star_list[:-1]
-            self.particles_drop_vel = self.particles_drop_vel[:-1]
-            self.colors = self.colors[:-1]
-
-    def drop_particles(self):
-        for idx, vel in enumerate(self.particles_drop_vel):
-            self.particles_drop_vel[idx] = vel + 0.5
-        for idx, star in enumerate(self.star_list):
-            pair_list = []
-            for pair in star:
-                pair_list.append((pair[0], pair[1] + self.particles_drop_vel[idx]))
-            self.star_list[idx] = pair_list
+    # def drop_particles(self):
+    #     for idx, vel in enumerate(self.particles_drop_vel):
+    #         self.particles_drop_vel[idx] = vel + 0.5
+    #     for idx, star in enumerate(self.star_list):
+    #         pair_list = []
+    #         for pair in star:
+    #             pair_list.append((pair[0], pair[1] + self.particles_drop_vel[idx]))
+    #         self.star_list[idx] = pair_list
 
 
 # player class
@@ -588,3 +676,22 @@ class Tile(pygame.sprite.Sprite):
 #             break
 #
 #     print('Final Score ', score)
+
+
+def run(config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
+                                neat.DefaultStagnation, config_path)
+    # setting population
+    p = neat.Population(config)
+    # giving statistics
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+    winner = p.run(main, 100)
+    print(winner)
+
+
+if __name__ == '__main__':
+    local_dir = os.path.dirname(__name__)
+    config_path = os.path.join(local_dir, "config_file.txt")
+    run(config_path)

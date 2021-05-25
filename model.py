@@ -7,11 +7,11 @@ import os
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, output_size)
+        self.linear1 = nn.Linear(input_size, hidden_size) # TODO: ändern
+        self.linear2 = nn.Linear(hidden_size, output_size) # TODO: ändern
 
     def forward(self, x):
-        x = F.relu(self.linear1(x))
+        x = F.relu(self.linear1(x)) # TODO: ändern
         x = self.linear2(x)
         return x
 
@@ -29,8 +29,8 @@ class QTrainer:
         self.lr = lr
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
-        self.criterion = nn.MSELoss()
+        self.optimizer = optim.Adam(model.parameters(), lr=self.lr) # TODO: ändern
+        self.criterion = nn.MSELoss() # TODO: ändern
 
     def train_step(self, state, action, reward, next_state, done):  # either tuple or list of tuples
         state = torch.tensor(state, dtype=torch.float)
@@ -63,9 +63,9 @@ class QTrainer:
         # pred.clone()
         # preds[argmax(action)] = Q_new
 
-        self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
-        loss.backward()
+        self.optimizer.zero_grad() # TODO: ändern
+        loss = self.criterion(target, pred) # TODO: ändern
+        loss.backward() # TODO: ändern
 
         self.optimizer.step()
 
