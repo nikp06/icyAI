@@ -7,6 +7,8 @@ import pickle
 import neat
 import sys
 import os
+import glob
+import visualize
 
 # screen resolution and scaling
 SCREEN_MAX = 700  # 600, 700, 800, 900, 1000
@@ -604,35 +606,79 @@ class Tile(pygame.sprite.Sprite):
 
 
 def run(config_path):
+    global GENERATION
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                 neat.DefaultStagnation, config_path)
+
     # config = neat.config.Config(config_path)
     # setting population
-    p = neat.Population(config)
+
     # giving statistics
-    p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
+    # p.add_reporter(neat.StdOutReporter(True))
+    # checkpointer = neat.Checkpointer(25)
+    # stats = neat.StatisticsReporter()
+    # p.add_reporter(stats)
 
-    p.add_reporter(stats)
+    if len(sys.argv) > 2:
+        checkpointer = neat.Checkpointer(1)
+        checkpointer.filename_prefix = os.path.join(sys.argv[1], sys.argv[1])
 
-    winner = p.run(main, 3)
+        # Load specified model
+        if os.path.isdir(sys.argv[1]):
+            if os.path.isfile(os.path.join(sys.argv[1], sys.argv[1]+'.pkl')):
+                filenamesList = []
+                for item in glob.glob(os.path.join(sys.argv[1], sys.argv[1] + '*')):
+                    if '.' not in item:
+                        filenamesList.append(item)
+                print(filenamesList)
+                p = neat.Checkpointer.restore_checkpoint(filenamesList[-1])
+                print(f"\nLoading existing model '{sys.argv[1]}'...")
+                with open(os.path.join(sys.argv[1], sys.argv[1]+'.pkl'), "rb") as f:
+                    genome = pickle.load(f)
+        else:
+            os.mkdir(sys.argv[1])
+            print(f"\nCreating new model '{sys.argv[1]}'...")
+            p = neat.Population(config)
+        p.add_reporter(checkpointer)
+        p.add_reporter(neat.StdOutReporter(True))
+        stats = neat.StatisticsReporter()
+        p.add_reporter(stats)
+        GENERATION = p.generation
+        if sys.argv[2] == 'train':
+            if len(sys.argv) == 4:
+                n = int(sys.argv[3])
+            else:
+                n = 50
+            print(f"\nTraining in process for given model '{sys.argv[1]}' for {n} runs...")
+            winner = p.run(main, n)
 
-    with open("winner.pkl", "wb") as f:
-        pickle.dump(winner, f)
-        f.close()
+            with open(os.path.join(sys.argv[1], sys.argv[1]+'.pkl'), "wb") as f:
+                pickle.dump(winner, f)
+                f.close()
 
-    print(winner)
+            node_names = {-1:'A', -2: 'B', 0:'A XOR B'}
+            visualize.draw_net(config, winner, True, filename=os.path.join(sys.argv[1], sys.argv[1]), node_names=node_names)
+            visualize.plot_stats(stats, ylog=False, view=True, filename=os.path.join(sys.argv[1], sys.argv[1]+'_avg_fitness'))
+            visualize.plot_species(stats, view=True, filename=os.path.join(sys.argv[1], sys.argv[1]+'_speciation'))
 
-    # Unpickle saved winner
-    with open("winner.pkl", "rb") as f:
-        genome = pickle.load(f)
+        elif sys.argv[2] == 'play':
+            # Convert loaded genome into required data structure
+            genomes = [(1, genome)]
 
-    # Convert loaded genome into required data structure
-    genomes = [(1, genome)]
+            if len(sys.argv) == 4:
+                # Call game with only the loaded genome
+                n = int(sys.argv[3])
+            else:
+                n = 50
 
-    # Call game with only the loaded genome
-    for i in range(10):
-        main(genomes, config)
+            print(f"\nPlaying in process for given model '{sys.argv[1]}' for {n} runs...")
+            for i in range(n):
+                main(genomes, config)
+                GENERATION -= 1
+
+    else:
+        print("\nNo/Invalid Arguments given... Please specify {name of model}, {train/play}, {n_runs}")
+
 
 
 if __name__ == '__main__':

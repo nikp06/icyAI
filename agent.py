@@ -61,7 +61,7 @@ class Agent:
         self.epsilon = 80 - self.n_games # TODO: ändern (randomness)
         final_move = [0, 0, 0]
         # if epsilon negative no random moves anymore
-        if random.randint(0, 200) < self.epsilon: # TODO: ändern
+        if random.randint(0, 200) < self.epsilon:  # TODO: ändern
             move = random.randint(0, 2)
             final_move[move] = 1
         else:
