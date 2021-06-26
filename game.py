@@ -3,6 +3,7 @@ from pygame.locals import *
 import numpy as np
 import random
 import sys
+import os
 
 # screen resolution and scaling
 SCREEN_MAX = 900  # 600, 700, 800, 900, 1000
@@ -21,15 +22,11 @@ SCALE12 = SCREEN_MAX * 1 / 2.5  # 400 max tile width
 SCALE13 = SCREEN_MAX * 1 / 2  # 500 when dropping first starts
 SCALE14 = SCREEN_MAX * 4 / 5  # 800 right boundary for switch to end
 SCALE15 = SCREEN_MAX * 9 / 10  # 9000
-
-# pygame initialization
 pygame.init()
-# mainClock = pygame.time.Clock()
-# pygame.display.set_caption('IcyTower by NikP')
 
 # colors
 TEXT_COLOR = (255, 255, 255)
-GREEN = (0, 255, 0)
+GREEN = (100, 230, 100)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -38,12 +35,12 @@ WALL_WIDTH = SCALE9
 FONT = pygame.font.SysFont("Sans", 20)
 SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
 # loading sprites and conversion
-IMAGE = pygame.image.load('icyMan.png').convert_alpha()
+IMAGE = pygame.image.load(os.path.join('sprites', 'icyMan.png')).convert_alpha()
 IMAGE = pygame.transform.scale(IMAGE, (int(SCALE8), int(SCALE9)))
-ICE = pygame.image.load('icy2.png').convert_alpha()
-BG = pygame.image.load('background.jpg')
+ICE = pygame.image.load(os.path.join('sprites', 'icy2.png')).convert_alpha()
+BG = pygame.image.load(os.path.join('sprites', 'background.jpg'))
 BG = pygame.transform.scale(BG, (SCREEN_MAX, SCREEN_MAX))
-WALL_RIGHT = pygame.image.load('wall2.png')
+WALL_RIGHT = pygame.image.load(os.path.join('sprites', 'wall2.png'))
 WALL_RIGHT = pygame.transform.scale(WALL_RIGHT, (int(WALL_WIDTH), SCREEN_MAX))
 WALL_RIGHT_FLIP = pygame.transform.flip(WALL_RIGHT, False, True)
 WALL_LEFT = pygame.transform.flip(WALL_RIGHT, True, True)
