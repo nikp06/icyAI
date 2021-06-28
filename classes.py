@@ -132,7 +132,7 @@ class IcyTowerGame:
         self.mainClock = pygame.time.Clock()
 
         for _, g in self.genomes:
-            net = neat.nn.FeedForwardNetwork.create(g, self.config)
+            net = neat.nn.RecurrentNetwork.create(g, self.config)  # RecurrentNetwork
             self.nets.append(net)
             self.ai_players.append(
                 Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - Player.PLAYER_WIDTH - WALL_WIDTH)),
@@ -179,6 +179,9 @@ class IcyTowerGame:
 
         # DETERMINING THE DROP_SPEED OF EVERYTHING ON SCREEN
         self.drop_all()
+        if self.train:
+            self.individual_drop(self.ai_players)
+
 
         # REMOVE OLD TILES AND GENERATE NEW ONES IF NECESSARY
         self.update_tiles()
@@ -229,6 +232,7 @@ class IcyTowerGame:
                     action[i] = 0
 
             player.move(action)
+
             if player.jump is True:
                 player.jump = False
                 # increase fitness for staying alive?
@@ -275,21 +279,26 @@ class IcyTowerGame:
             # int(pygame.time.get_ticks() / 1000) == 10 or self.highest_floor > 2:  # or self.max_height < SCREEN_MAX/2:
             if self.frame_iteration >= 500 or self.highest_floor > 2:
                 self.drop = True
+                self.level += 1
+
         else:
-            if self.timesince >= self.level * 30:
+            # if self.timesince >= self.level * 30:
+            if (self.frame_iteration % 1750) == 0:
                 self.level += 1
 
             if self.start_pos:
                 cur_pos = pygame.mouse.get_pos()
                 self.drop_speed = int((cur_pos[1] - self.start_pos[1])/10)
             else:
-                self.drop_speed = 0
-                # self.drop_speed = self.level
+                if self.train:
+                    self.drop_speed = 0
+                else:
+                    self.drop_speed = self.level
                 for player in self.players:
                     if 0 < player.rect.y <= SCREEN_MAX / 10:
-                        self.drop_speed = 8
+                        self.drop_speed += 8
                     elif player.rect.y <= 0:
-                        self.drop_speed = 15
+                        self.drop_speed += 15
                         continue
 
             for player in self.players:
@@ -319,6 +328,25 @@ class IcyTowerGame:
                 wall.wall_height2 += self.drop_speed
             self.height += self.drop_speed
             self.drop_speed = 0
+
+    def individual_drop(self, players):
+        for x, player in enumerate(players):
+            player.current_y += player.dy
+            drop_speed = 0
+            if player.current_y < SCREEN_MAX/2:
+                player.individual_drop = True
+            if player.individual_drop:
+                drop_speed += self.level
+                if 0 < player.current_y <= SCREEN_MAX / 10:
+                    drop_speed += 8
+                elif player.current_y <= 0:
+                    drop_speed += 15
+            player.current_y += drop_speed
+            if player.current_y >= SCREEN_MAX - player.PLAYER_HEIGHT:
+                players.pop(x)
+                self.ge[x].fitness -= 500
+                self.nets.pop(x)
+                self.ge.pop(x)
 
     def back_to_start(self, height):
         # self.frame_iteration += 1
@@ -405,7 +433,7 @@ class IcyTowerGame:
             player.on_floor = False
             for idx, tile in enumerate(self.tiles):
                 if player.rect.colliderect(tile):
-                    if player.rect.bottom - tile.rect.top < 21 and player.dy > 0:
+                    if player.rect.bottom - tile.rect.top < 21 and player.dy >= 0:
                         player.current_floor = idx
                         player.on_floor = True
                         player.tilting = False
@@ -641,6 +669,8 @@ class Player(pygame.sprite.Sprite):
         self.combo_added = True
         self.combo_floors = 0
         self.dy = 0
+        self.current_y = self.rect.y
+        self.individual_drop = False
 
         self.frame_iteration = 0
 
@@ -723,13 +753,15 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.vel_y = 0
                 dy = 0
-        else:
-            self.tick_count += 1
-            dy = self.vel_y + self.tick_count
             self.dy = dy
+        else:
+
+            dy = self.vel_y + self.tick_count
+            self.tick_count += 1
             # ensuring max speed
             if dy >= 15:
                 dy = 15
+            self.dy = dy
 
         # DISTANCE OF MOVEMENT; MAX SPEEDS AND BONUS Y
         # if not standing -> grant bonus_y and ensure max

@@ -42,22 +42,24 @@ def main(genomes, config):
     if not DRAW:
         game.draw = False
 
-    i = None
-    for _, g in game.genomes:
-        if i != P.species.get_species_id(g.key):
-            i = P.species.get_species_id(g.key)
-        g.species_id = i
-    game.color_species()
+    if len(sys.argv) > 1:
+        if sys.argv[2] == 'train':
+            i = None
+            for _, g in game.genomes:
+                if i != P.species.get_species_id(g.key):
+                    i = P.species.get_species_id(g.key)
+                g.species_id = i
+            game.color_species()
     game.clock_speed = CLOCK_SPEED
 
     while True:
         game.play_step()
-        if not RECORDING:
-            if game.highest_fitness > 9800:
-                if not game.draw:
-                    game.clock_speed = 60
-                    game.draw = True
-                start_stop_capture()
+        # if not RECORDING:
+            # if game.highest_fitness > 9800:
+            #     if not game.draw:
+            #         game.clock_speed = 60
+            #         game.draw = True
+                # start_stop_capture()
 
         # if len(game.players) == 1:
         #     last_player = game.players[0]
@@ -65,7 +67,7 @@ def main(genomes, config):
         if len(game.players) == 0:
             GENERATION += 1
             if RECORDING:
-                start_stop_capture()
+                # start_stop_capture()
                 game.clock_speed = CLOCK_SPEED
                 game.draw_window_pause()
             else:
