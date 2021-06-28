@@ -7,7 +7,6 @@ import random
 import numpy as np
 
 # screen resolution and scaling
-jo = 1000
 SCREEN_MAX = 900  # 600, 700, 800, 900, 1000
 SCALE1 = SCREEN_MAX * 1 / 500  # 2 vel_x
 SCALE2 = SCREEN_MAX * 1 / 250  # 4 bonus y 1
