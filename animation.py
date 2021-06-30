@@ -6,6 +6,7 @@ import neat
 import random
 import numpy as np
 
+
 # screen resolution and scaling
 SCREEN_MAX = 900  # 600, 700, 800, 900, 1000
 SCALE1 = SCREEN_MAX * 1 / 500  # 2 vel_x
@@ -24,7 +25,8 @@ SCALE13 = SCREEN_MAX * 1 / 2  # 500 when dropping first starts
 SCALE14 = SCREEN_MAX * 4 / 5  # 800 right boundary for switch to end
 SCALE15 = SCREEN_MAX * 9 / 10  # 9000
 pygame.init()
-
+soundObj = pygame.mixer.Sound(os.path.join('sounds', 'pop.flac'))
+soundObj2 = pygame.mixer.Sound(os.path.join('sounds', 'jump.wav'))
 # colors
 TEXT_COLOR = (255, 255, 255)
 GREEN = (100, 230, 100)
@@ -43,6 +45,8 @@ IMAGE = pygame.transform.scale(IMAGE, (int(SCALE8), int(SCALE9)))
 IMAGE_ANTAGONIST = pygame.transform.scale(IMAGE_ANTAGONIST, (int(SCALE8), int(SCALE9)))
 IMAGE2 = pygame.image.load(os.path.join('sprites', 'icyMan2.png')).convert_alpha()
 IMAGE2 = pygame.transform.scale(IMAGE2, (int(SCALE8), int(SCALE9)))
+IMAGE2_SHRUG = pygame.image.load(os.path.join('sprites', 'icyMan2_shrug3.png')).convert_alpha()
+IMAGE2_SHRUG = pygame.transform.scale(IMAGE2_SHRUG, (int(SCALE8), int(SCALE9)))
 IMAGE3 = pygame.image.load(os.path.join('sprites', 'icyMan3.png')).convert_alpha()
 IMAGE3 = pygame.transform.scale(IMAGE3, (int(SCALE8), int(SCALE9)))
 IMAGE4 = pygame.image.load(os.path.join('sprites', 'icyMan4.png')).convert_alpha()
@@ -103,7 +107,7 @@ class IcyTowerGame:
 
         self.tiles = [Tile(WALL_WIDTH, SCREEN_MAX - SCALE9 + 100, SCREEN_MAX - WALL_WIDTH),
                       Tile(WALL_WIDTH, SCREEN_MAX - SCALE9, SCREEN_MAX - WALL_WIDTH)]
-        self.update_tiles()
+        # self.update_tiles()
         self.walls = [Wall('left'), Wall('right')]
 
         # initialized variables
@@ -126,7 +130,6 @@ class IcyTowerGame:
 
         self.score = 0
         self.frame_iteration = 0
-        self.popped_tiles = 0
 
     def reset(self):
         pygame.display.set_caption('IcyTower by NikP')
@@ -171,7 +174,8 @@ class IcyTowerGame:
                 self.execute_movement(self.human_players)
 
         # CHECKING COLLISION
-        self.collision_check()
+        if game.frame_iteration < 2000:
+            self.collision_check()
 
         # UPDATING THE SCORE
         if self.train:
@@ -181,29 +185,32 @@ class IcyTowerGame:
 
 
         # DETERMINING THE DROP_SPEED OF EVERYTHING ON SCREEN
-        self.drop_all()
-        if self.train:
-            self.individual_drop(self.ai_players)
+        # self.drop_all()
+        # if self.train:
+        #     self.individual_drop(self.ai_players)
 
 
         # REMOVE OLD TILES AND GENERATE NEW ONES IF NECESSARY
-        self.update_tiles()
-        # self.remove_tiles()
+        if game.frame_iteration < 2500:
+            self.update_tiles()
 
         # DRAW EVERYTHING TO THE SCREEN
-        if self.draw:
-            if self.versus:
-                self.draw_window_versus()
-            else:
-                if self.train:
-                    self.draw_window_train()
+        if game.frame_iteration < 2700:
+            if self.draw:
+                if self.versus:
+                    self.draw_window_versus()
                 else:
-                    self.draw_window_play()
-        # self.draw_window_train()
-        # self.draw_window_versus()
+                    if self.train:
+                        self.draw_window_train()
+                    else:
+                        self.draw_window_play()
+            # self.draw_window_train()
+            # self.draw_window_versus()
+        else:
+            SCREEN.fill((0, 0, 0))
 
         # ADDING PARTICLES IF NECESSARY
-        self.generate_particles()
+        # self.generate_particles()
 
         # UPDATE THE SCREEN
         if self.draw:
@@ -273,8 +280,18 @@ class IcyTowerGame:
 
     @staticmethod
     def execute_movement(players):
-        action = None
-        for player in players:
+        # action = None
+        for f, player in enumerate(players):
+            if f == 0:
+                action = None
+            else:
+                action = [0, 0, 0]
+                action_idx = random.choice([0, 1, 2])
+                for j in range(3):
+                    if j == action_idx:
+                        action[j] = 1
+                    else:
+                        action[j] = 0
             player.move(action)
             if player.jump is True:
                 player.jump = False
@@ -434,45 +451,18 @@ class IcyTowerGame:
                     # if event.key == K_SPACE:
                     #     self.players[0].jump = False
 
-    # def collision_check(self):
-    #     for player in self.players:
-    #         player.on_floor = False
-    #         for idx, tile in enumerate(self.tiles):
-    #             if player.rect.colliderect(tile):
-    #                 if player.rect.bottom - tile.rect.top < 21 and player.dy >= 0:
-    #                     player.current_floor = idx
-    #                     player.on_floor = True
-    #                     player.tilting = False
-    #                     player.tilt = 0
-    #                     player.rect.bottom = tile.rect.top + 1
-    #                     player.current_height = tile.rect.top + 1
-    #
-    #         if (player.rect.x <= WALL_WIDTH) or (player.rect.x+player.PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
-    #             player.switch = True
-
     def collision_check(self):
         for player in self.players:
             player.on_floor = False
-            start = player.current_floor-self.popped_tiles
-            if 0 <= start < 10:
-                c = start
-            else:
-                c = 10
-            # print(c)
-            for idx, tile in enumerate(self.tiles[start-c:start+10]):
-            # for idx, tile in enumerate(self.tiles):
+            for idx, tile in enumerate(self.tiles):
                 if player.rect.colliderect(tile):
                     if player.rect.bottom - tile.rect.top < 21 and player.dy >= 0:
-                        if start != 0:
-                            player.current_floor = start + idx - c + self.popped_tiles
-                        else:
-                            player.current_floor = idx
+                        player.current_floor = idx
                         player.on_floor = True
                         player.tilting = False
                         player.tilt = 0
                         player.rect.bottom = tile.rect.top + 1
                         player.current_height = tile.rect.top + 1
-                        continue
 
             if (player.rect.x <= WALL_WIDTH) or (player.rect.x+player.PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
                 player.switch = True
@@ -491,73 +481,30 @@ class IcyTowerGame:
                             Tile(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - WALL_WIDTH - tile_width)), tile_diff,
                                  tile_width))
 
-    # def remove_tiles(self):
-    #     print(len(self.tiles))
-    #     if self.players:
-    #         if len(self.tiles) > 20:
-    #             lowest = max([player.rect.y for player in self.players])
-    #
-    #             tiles = self.tiles
-    #             for i, tile in enumerate(tiles):
-    #                 if tile.rect.y > lowest + SCREEN_MAX:
-    #                     self.tiles.pop(i)
-    #                     self.popped_tiles += 1
-    #                 else:
-    #                     return
-
-    # def draw_window_train(self):
-    #     SCREEN.fill((0, 0, 0))
-    #     SCREEN.blit(BG, (0, 0))
-    #
-    #     for tile in self.tiles:
-    #         if 0 <= tile.rect.y <= SCREEN_MAX:
-    #             tile.draw()
-    #     for player in self.players:
-    #         if 0 <= player.rect.y <= SCREEN_MAX:
-    #             player.draw()
-    #     for wall in self.walls:
-    #         wall.draw()
-    #
-    #     msg_generation = FONT.render('Generation: ' + str(self.generation), True, GREEN)
-    #     msg_time = FONT.render('Time: ' + str(self.timesince), True, GREEN)
-    #     msg_floors = FONT.render('Floors climbed: ' + str(self.highest_floor), True, GREEN)
-    #     msg_fitness = FONT.render('Highest Fitness: ' + str(self.highest_fitness), True, GREEN)
-    #     msg_alive = FONT.render('Alive: ' + str(len(self.players)), True, GREEN)
-    #
-    #     SCREEN.blit(msg_time, (60, 20))
-    #     SCREEN.blit(msg_floors, (60, 50))
-    #     SCREEN.blit(msg_generation, (SCREEN_MAX - 50 - msg_generation.get_width(), 20))
-    #     SCREEN.blit(msg_fitness, (SCREEN_MAX - 50 - msg_fitness.get_width(), 50))
-    #     SCREEN.blit(msg_alive, (SCREEN_MAX - 50 - msg_alive.get_width(), 80))
-
     def draw_window_train(self):
-            SCREEN.fill((0, 0, 0))
-            SCREEN.blit(BG, (0, 0))
+        SCREEN.fill((0, 0, 0))
+        SCREEN.blit(BG, (0, 0))
 
-            # for tile in self.tiles:
-            #     if 0 <= tile.rect.y <= SCREEN_MAX:
-            #         tile.draw()
-            for tile in self.tiles[0:self.highest_floor+10]:
-                if 0 <= tile.rect.y <= SCREEN_MAX:
-                    tile.draw()
+        for tile in self.tiles:
+            if 0 <= tile.rect.y <= SCREEN_MAX:
+                tile.draw()
+        for player in self.players:
+            if 0 <= player.rect.y <= SCREEN_MAX:
+                player.draw()
+        for wall in self.walls:
+            wall.draw()
 
-            for player in self.players:
-                if 0 <= player.rect.y <= SCREEN_MAX:
-                    player.draw()
-            for wall in self.walls:
-                wall.draw()
+        msg_generation = FONT.render('Generation: ' + str(self.generation), True, GREEN)
+        msg_time = FONT.render('Time: ' + str(self.timesince), True, GREEN)
+        msg_floors = FONT.render('Floors climbed: ' + str(self.highest_floor), True, GREEN)
+        msg_fitness = FONT.render('Highest Fitness: ' + str(self.highest_fitness), True, GREEN)
+        msg_alive = FONT.render('Alive: ' + str(len(self.players)), True, GREEN)
 
-            msg_generation = FONT.render('Generation: ' + str(self.generation), True, GREEN)
-            msg_time = FONT.render('Time: ' + str(self.timesince), True, GREEN)
-            msg_floors = FONT.render('Floors climbed: ' + str(self.highest_floor), True, GREEN)
-            msg_fitness = FONT.render('Highest Fitness: ' + str(self.highest_fitness), True, GREEN)
-            msg_alive = FONT.render('Alive: ' + str(len(self.players)), True, GREEN)
-
-            SCREEN.blit(msg_time, (60, 20))
-            SCREEN.blit(msg_floors, (60, 50))
-            SCREEN.blit(msg_generation, (SCREEN_MAX - 50 - msg_generation.get_width(), 20))
-            SCREEN.blit(msg_fitness, (SCREEN_MAX - 50 - msg_fitness.get_width(), 50))
-            SCREEN.blit(msg_alive, (SCREEN_MAX - 50 - msg_alive.get_width(), 80))
+        SCREEN.blit(msg_time, (60, 20))
+        SCREEN.blit(msg_floors, (60, 50))
+        SCREEN.blit(msg_generation, (SCREEN_MAX - 50 - msg_generation.get_width(), 20))
+        SCREEN.blit(msg_fitness, (SCREEN_MAX - 50 - msg_fitness.get_width(), 50))
+        SCREEN.blit(msg_alive, (SCREEN_MAX - 50 - msg_alive.get_width(), 80))
 
     def draw_window_play(self):
         SCREEN.fill((0, 0, 0))
@@ -572,17 +519,17 @@ class IcyTowerGame:
         for wall in self.walls:
             wall.draw()
 
-        for player in self.players:
-            msg_time = 'Time: ' + str(self.timesince)
-            msg_combo = 'Combo ON - combo_floors: ' + str(player.combo_floors)
-            msg_score = 'Score: ' + str(self.score)
-            msg_floors = 'Floors climbed: ' + str(player.current_floor)
-
-            SCREEN.blit(FONT.render(msg_time, True, TEXT_COLOR), (60, 20))
-            SCREEN.blit(FONT.render(msg_score, True, TEXT_COLOR), (60, 50))
-            SCREEN.blit(FONT.render(msg_floors, True, TEXT_COLOR), (60, 80))
-            if player.combo:
-                SCREEN.blit(FONT.render(msg_combo, True, GREEN), (60, 110))
+        # for player in self.players:
+        #     msg_time = 'Time: ' + str(self.timesince)
+        #     msg_combo = 'Combo ON - combo_floors: ' + str(player.combo_floors)
+        #     msg_score = 'Score: ' + str(self.score)
+        #     msg_floors = 'Floors climbed: ' + str(player.current_floor)
+        #
+        #     SCREEN.blit(FONT.render(msg_time, True, TEXT_COLOR), (60, 20))
+        #     SCREEN.blit(FONT.render(msg_score, True, TEXT_COLOR), (60, 50))
+        #     SCREEN.blit(FONT.render(msg_floors, True, TEXT_COLOR), (60, 80))
+        #     if player.combo:
+        #         SCREEN.blit(FONT.render(msg_combo, True, GREEN), (60, 110))
 
     def draw_window_versus(self):
         SCREEN.fill((0, 0, 0))
@@ -946,3 +893,40 @@ class Explosion(pygame.sprite.Sprite):
         #if the animation is complete, reset animation index
         if self.index >= len(self.images) - 1 and self.counter >= explosion_speed:
             self.kill()
+
+
+game = IcyTowerGame(None, None, train=False, ai=False, versus=False)
+game.players[0] = Player(450,
+                       SCREEN_MAX - SCALE9 - SCALE9)
+game.players[0].image = IMAGE2
+for i in range(200):
+    game.players.append(Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - Player.PLAYER_WIDTH - WALL_WIDTH)),
+                       SCREEN_MAX - SCALE9 - SCALE9))
+tile_diff = game.tiles[-1].rect.top - 100
+game.tiles.append(Tile(350, tile_diff, 200))
+
+while True:
+    game.play_step()
+    game.frame_iteration += 1
+    if game.frame_iteration == 1100:
+        soundObj.play()
+        game.players = [game.players[0]]
+
+    if game.frame_iteration == 1400:
+        game.players[0].image = IMAGE2_SHRUG
+    if game.frame_iteration == 1600:
+        game.players[0].image = IMAGE2
+    if game.frame_iteration == 2000:
+        soundObj2.play()
+        game.players[0].jump = True
+    if game.frame_iteration == 2500:
+        soundObj.play()
+        game.tiles = []
+    if game.frame_iteration == 2600:
+        soundObj.play()
+        game.walls = []
+
+        # game.players[0].jump = False
+        # game.players[0].on_floor = False
+        # game.players[0].rect.y -= 5
+    # print(game.frame_iteration)

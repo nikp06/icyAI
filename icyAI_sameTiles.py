@@ -8,13 +8,15 @@ import re
 import shutil
 import time
 from pynput.keyboard import Key, Controller
+import copy
 # import numpy as np
-from classes import IcyTowerGame
+from classes_sameTiles import IcyTowerGame, Tile
 
 GENERATION = 0
 CLOCK_SPEED = 60
 DRAW = True
 RECORDING = False
+TILES = None
 
 
 def main(genomes, config):
@@ -22,25 +24,32 @@ def main(genomes, config):
     global P
     global CLOCK_SPEED
     global DRAW
+    global TILES
 
     game = None
     if len(sys.argv) > 1:
         if sys.argv[2] == 'train':
-            game = IcyTowerGame(genomes, config, train=True, ai=True, versus=False)
+            game = IcyTowerGame(genomes, config, TILES, train=True, ai=True, versus=False)
         elif sys.argv[2] == 'play':
             if len(sys.argv) > 4:
                 if sys.argv[4] == 'versus':
-                    game = IcyTowerGame(genomes, config, train=False, ai=True, versus=True)
+                    game = IcyTowerGame(genomes, config, TILES, train=False, ai=True, versus=True)
                 else:
-                    game = IcyTowerGame(genomes, config, train=False, ai=True, versus=False)
+                    game = IcyTowerGame(genomes, config, TILES, train=False, ai=True, versus=False)
             else:
-                game = IcyTowerGame(genomes, config, train=False, ai=True, versus=False)
+                game = IcyTowerGame(genomes, config, TILES, train=False, ai=True, versus=False)
     else:
-        game = IcyTowerGame(genomes, config, train=False, ai=False, versus=False)
+        game = IcyTowerGame(genomes, config, TILES, train=False, ai=False, versus=False)
 
     game.generation = GENERATION
     if not DRAW:
         game.draw = False
+
+    if not TILES:
+        TILES = [(tile.rect.x, tile.rect.y, tile.tile_width) for tile in game.tiles]
+    else:
+        for x, y, width in TILES:
+            game.tiles.append(Tile(x, y, width))
 
     if len(sys.argv) > 1:
         if sys.argv[2] == 'train':
