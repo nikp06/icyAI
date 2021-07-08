@@ -108,6 +108,7 @@ class IcyTowerGame:
 
         # initialized variables
         self.drop = False
+        self.change_drop_speed = False
         self.level = 0
         self.drop_speed = self.level
         self.timesince = 0
@@ -133,7 +134,7 @@ class IcyTowerGame:
         self.mainClock = pygame.time.Clock()
 
         for _, g in self.genomes:
-            net = neat.nn.FeedForwardNetwork.create(g, self.config)  # RecurrentNetwork
+            net = neat.nn.RecurrentNetwork.create(g, self.config)  # RecurrentNetwork
             # net = neat.ctrnn.CTRNN.create(g, self.config, 1/60)
             # net.reset()
             self.nets.append(net)
@@ -280,6 +281,10 @@ class IcyTowerGame:
                 player.jump = False
 
     def drop_all(self):
+        if not any(-100 < player.rect.y <= SCREEN_MAX for player in self.players):
+            self.change_drop_speed = False
+        else:
+            self.change_drop_speed = True
         self.frame_iteration += 1
         if self.drop is False:
             # int(pygame.time.get_ticks() / 1000) == 10 or self.highest_floor > 2:  # or self.max_height < SCREEN_MAX/2:
@@ -296,10 +301,10 @@ class IcyTowerGame:
                 cur_pos = pygame.mouse.get_pos()
                 self.drop_speed = int((cur_pos[1] - self.start_pos[1])/10)
             else:
-                if self.train:
-                    self.drop_speed = 0
-                else:
+                if self.change_drop_speed:
                     self.drop_speed = self.level
+                else:
+                    self.drop_speed = 0
                 for player in self.players:
                     if 0 < player.rect.y <= SCREEN_MAX / 10:
                         self.drop_speed += 8
@@ -405,6 +410,8 @@ class IcyTowerGame:
                         self.clock_speed = 120
                     else:
                         self.clock_speed = 60
+                # if event.key == K_TAB:
+                #     self.change_drop_speed = not self.change_drop_speed
 
                 if event.key == K_PLUS:
                     self.clock_speed += 20
@@ -472,7 +479,7 @@ class IcyTowerGame:
                         player.tilt = 0
                         player.rect.bottom = tile.rect.top + 1
                         player.current_height = tile.rect.top + 1
-                        continue
+                        break
 
             if (player.rect.x <= WALL_WIDTH) or (player.rect.x+player.PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
                 player.switch = True
@@ -593,7 +600,7 @@ class IcyTowerGame:
                 tile.draw()
         for player in self.ai_players:
             if 0 <= player.rect.y <= SCREEN_MAX:
-                player.image = IMAGE_ANTAGONIST
+                player.image = ICY_IMAGES[3]
                 player.draw()
         for player in self.human_players:
             if 0 <= player.rect.y <= SCREEN_MAX:

@@ -15,6 +15,9 @@ GENERATION = 0
 CLOCK_SPEED = 60
 DRAW = True
 RECORDING = False
+RECORDING_COUNTER = 0
+
+# time.sleep(5)
 
 
 def main(genomes, config):
@@ -22,6 +25,7 @@ def main(genomes, config):
     global P
     global CLOCK_SPEED
     global DRAW
+    global RECORDING_COUNTER
 
     game = None
     if len(sys.argv) > 1:
@@ -54,20 +58,33 @@ def main(genomes, config):
 
     while True:
         game.play_step()
-        # if not RECORDING:
-            # if game.highest_fitness > 9800:
-            #     if not game.draw:
-            #         game.clock_speed = 60
-            #         game.draw = True
-                # start_stop_capture()
+        if not RECORDING and GENERATION <= 20:
+            if not game.draw:
+                game.clock_speed = 60
+                game.draw = True
+            # start_stop_capture()
+            # RECORDING_COUNTER += 1
+        elif not RECORDING and GENERATION % 10 == 0:
+            if not game.draw:
+                game.clock_speed = 60
+                game.draw = True
+            # start_stop_capture()
+            # RECORDING_COUNTER += 1
+        if not RECORDING:
+            if game.highest_fitness > 6800:
+                if not game.draw:
+                    game.clock_speed = 60
+                    game.draw = True
+                start_stop_capture()
+                # RECORDING_COUNTER += 1
 
         # if len(game.players) == 1:
         #     last_player = game.players[0]
         #     last_genome = game.genomes[0]
-        if len(game.players) == 0:
+        if len(game.players) == 0:  # or game.ai_players[0].rect.y > 900 or game.human_players[0].rect.y > 900:
             GENERATION += 1
             if RECORDING:
-                # start_stop_capture()
+                start_stop_capture()
                 game.clock_speed = CLOCK_SPEED
                 game.draw_window_pause()
             else:
@@ -154,7 +171,7 @@ def run(config_path):
             node_names = {-1: 'A', -2: 'B', 0: 'A XOR B'}
             shutil.copyfile('config_file.txt', os.path.join(path, sys.argv[1] + '_config.txt'))
 
-            for i in range(50):
+            for i in range(25):
                 print(f"\nTraining in process for given model '{sys.argv[1]}' for {n} runs...")
                 winner = P.run(main, n)
 
