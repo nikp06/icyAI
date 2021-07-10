@@ -39,6 +39,7 @@ py icyAI.py name play n
 - replace n with the number of times you want to let the AI play
 
 For playing against a trained AI:
+
 ```
 py icyAI.py name play n versus
 ```
