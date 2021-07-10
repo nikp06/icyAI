@@ -17,8 +17,6 @@ DRAW = True
 RECORDING = False
 RECORDING_COUNTER = 0
 
-# time.sleep(5)
-
 
 def main(genomes, config):
     global GENERATION
@@ -99,6 +97,7 @@ def extract_number(f):
 
 
 def start_stop_capture():
+    # for automated screen capturing on windows
     global RECORDING
     keyboard = Controller()
     keyboard.press(Key.cmd)
@@ -137,7 +136,7 @@ def run(config_path):
 
                 print(f"\nLoading existing model '{sys.argv[1]}'...")
                 filenames_list = [_[:-4] for _ in os.listdir(path) if _.endswith('.pkl')]
-                print(max(filenames_list, key=extract_number))
+                # print(max(filenames_list, key=extract_number))
                 with open(os.path.join(path, max(filenames_list, key=extract_number) + '.pkl'), "rb") as f:
                     genome = pickle.load(f)
             else:
@@ -171,6 +170,7 @@ def run(config_path):
             node_names = {-1: 'A', -2: 'B', 0: 'A XOR B'}
             shutil.copyfile('config_file.txt', os.path.join(path, sys.argv[1] + '_config.txt'))
 
+            # run the algorithm the specified amount of times x 25 -> after each iteration the best genome is saved
             for i in range(25):
                 print(f"\nTraining in process for given model '{sys.argv[1]}' for {n} runs...")
                 winner = P.run(main, n)
@@ -189,7 +189,6 @@ def run(config_path):
 
         elif sys.argv[2] == 'play':
             # Convert loaded genome into required data structure
-
             genomes = [(1, genome)]  # genome.key instead of 1?
 
             if len(sys.argv) == 4:
