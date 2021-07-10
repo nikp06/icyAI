@@ -2,7 +2,7 @@
 
 Hello Internet! Welcome to *icyAI* - a project for which I recreated the game Icy Tower in Python with Pygame and built an AI that learns how to play it.
 
-[![Thumbnail](thumb6.png)](https://youtu.be/W6qyRbmr_aA)
+[![Thumbnail](media/thumb6.png)](https://youtu.be/W6qyRbmr_aA)
 
 Click [here](https://youtu.be/W6qyRbmr_aA), to see what I did in this project on YouTube.
 
@@ -10,7 +10,7 @@ I made use of a genetic algorithm called NEAT. NEAT evolves neural network topol
 It is a known method from the domain of reinforcement learning. The concept is further explained in the video. You can also read the initial [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf) or browse through the [NEAT documentation](https://neat-python.readthedocs.io/en/latest/neat_overview.html).
 This repository contains all files needed to train the AI for yourself.
 
-![AI during training](training.gif)
+![AI during training](media/training.gif)
 
 ## Description
 
