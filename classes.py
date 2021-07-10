@@ -79,7 +79,6 @@ class IcyTowerGame:
         self.height = 0
 
         if self.ai:
-            # initialized objects
             self.generation = 0
             self.nets = []
             self.ge = []
@@ -180,12 +179,10 @@ class IcyTowerGame:
         else:
             self.update_score()
 
-
         # DETERMINING THE DROP_SPEED OF EVERYTHING ON SCREEN
         self.drop_all()
         if self.train:
             self.individual_drop(self.ai_players)
-
 
         # REMOVE OLD TILES AND GENERATE NEW ONES IF NECESSARY
         self.update_tiles()
@@ -200,8 +197,6 @@ class IcyTowerGame:
                     self.draw_window_train()
                 else:
                     self.draw_window_play()
-        # self.draw_window_train()
-        # self.draw_window_versus()
 
         # ADDING PARTICLES IF NECESSARY
         self.generate_particles()
@@ -242,12 +237,14 @@ class IcyTowerGame:
 
             if player.jump is True:
                 player.jump = False
-                # increase fitness for staying alive?
+            # increase fitness for staying alive?
             # self.ge[x].fitness += 0.1
 
             # if player.switch is True:
                 # self.ge[x].fitness -= 10
             player.frame_iteration += 1
+
+            # explosion animation
             if self.draw:
                 if player.rect.y < SCREEN_MAX:
                     if player.frame_iteration == 250:
@@ -362,7 +359,7 @@ class IcyTowerGame:
     def back_to_start(self, height):
         # self.frame_iteration += 1
         self.drop_speed = height
-                # self.drop_speed = self.level
+        # self.drop_speed = self.level
 
         for player in self.players:
             player.rect.y += self.drop_speed
@@ -457,6 +454,7 @@ class IcyTowerGame:
     #         if (player.rect.x <= WALL_WIDTH) or (player.rect.x+player.PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
     #             player.switch = True
 
+    # new collision_check function only checking x surrounding tile and not the whole list for collision
     def collision_check(self):
         for player in self.players:
             player.on_floor = False
@@ -512,59 +510,31 @@ class IcyTowerGame:
     #                 else:
     #                     return
 
-    # def draw_window_train(self):
-    #     SCREEN.fill((0, 0, 0))
-    #     SCREEN.blit(BG, (0, 0))
-    #
-    #     for tile in self.tiles:
-    #         if 0 <= tile.rect.y <= SCREEN_MAX:
-    #             tile.draw()
-    #     for player in self.players:
-    #         if 0 <= player.rect.y <= SCREEN_MAX:
-    #             player.draw()
-    #     for wall in self.walls:
-    #         wall.draw()
-    #
-    #     msg_generation = FONT.render('Generation: ' + str(self.generation), True, GREEN)
-    #     msg_time = FONT.render('Time: ' + str(self.timesince), True, GREEN)
-    #     msg_floors = FONT.render('Floors climbed: ' + str(self.highest_floor), True, GREEN)
-    #     msg_fitness = FONT.render('Highest Fitness: ' + str(self.highest_fitness), True, GREEN)
-    #     msg_alive = FONT.render('Alive: ' + str(len(self.players)), True, GREEN)
-    #
-    #     SCREEN.blit(msg_time, (60, 20))
-    #     SCREEN.blit(msg_floors, (60, 50))
-    #     SCREEN.blit(msg_generation, (SCREEN_MAX - 50 - msg_generation.get_width(), 20))
-    #     SCREEN.blit(msg_fitness, (SCREEN_MAX - 50 - msg_fitness.get_width(), 50))
-    #     SCREEN.blit(msg_alive, (SCREEN_MAX - 50 - msg_alive.get_width(), 80))
-
     def draw_window_train(self):
-            SCREEN.fill((0, 0, 0))
-            SCREEN.blit(BG, (0, 0))
+        SCREEN.fill((0, 0, 0))
+        SCREEN.blit(BG, (0, 0))
 
-            # for tile in self.tiles:
-            #     if 0 <= tile.rect.y <= SCREEN_MAX:
-            #         tile.draw()
-            for tile in self.tiles[0:self.highest_floor+10]:
-                if 0 <= tile.rect.y <= SCREEN_MAX:
-                    tile.draw()
+        for tile in self.tiles[0:self.highest_floor+10]:
+            if 0 <= tile.rect.y <= SCREEN_MAX:
+                tile.draw()
 
-            for player in self.players:
-                if 0 <= player.rect.y <= SCREEN_MAX:
-                    player.draw()
-            for wall in self.walls:
-                wall.draw()
+        for player in self.players:
+            if 0 <= player.rect.y <= SCREEN_MAX:
+                player.draw()
+        for wall in self.walls:
+            wall.draw()
 
-            msg_generation = FONT.render('Generation: ' + str(self.generation), True, GREEN)
-            msg_time = FONT.render('Time: ' + str(self.timesince), True, GREEN)
-            msg_floors = FONT.render('Floors climbed: ' + str(self.highest_floor), True, GREEN)
-            msg_fitness = FONT.render('Highest Fitness: ' + str(self.highest_fitness), True, GREEN)
-            msg_alive = FONT.render('Alive: ' + str(len(self.players)), True, GREEN)
+        msg_generation = FONT.render('Generation: ' + str(self.generation), True, GREEN)
+        msg_time = FONT.render('Time: ' + str(self.timesince), True, GREEN)
+        msg_floors = FONT.render('Floors climbed: ' + str(self.highest_floor), True, GREEN)
+        msg_fitness = FONT.render('Highest Fitness: ' + str(self.highest_fitness), True, GREEN)
+        msg_alive = FONT.render('Alive: ' + str(len(self.players)), True, GREEN)
 
-            SCREEN.blit(msg_time, (60, 20))
-            SCREEN.blit(msg_floors, (60, 50))
-            SCREEN.blit(msg_generation, (SCREEN_MAX - 50 - msg_generation.get_width(), 20))
-            SCREEN.blit(msg_fitness, (SCREEN_MAX - 50 - msg_fitness.get_width(), 50))
-            SCREEN.blit(msg_alive, (SCREEN_MAX - 50 - msg_alive.get_width(), 80))
+        SCREEN.blit(msg_time, (60, 20))
+        SCREEN.blit(msg_floors, (60, 50))
+        SCREEN.blit(msg_generation, (SCREEN_MAX - 50 - msg_generation.get_width(), 20))
+        SCREEN.blit(msg_fitness, (SCREEN_MAX - 50 - msg_fitness.get_width(), 50))
+        SCREEN.blit(msg_alive, (SCREEN_MAX - 50 - msg_alive.get_width(), 80))
 
     def draw_window_play(self):
         SCREEN.fill((0, 0, 0))
@@ -758,13 +728,13 @@ class Player(pygame.sprite.Sprite):
         self.frame_iteration = 0
 
     def change_color(self, color):
-        colouredImage = pygame.Surface(self.image.get_size())
-        colouredImage.fill(color)
+        coloured_image = pygame.Surface(self.image.get_size())
+        coloured_image.fill(color)
 
-        finalImage = self.image.copy()
-        finalImage.blit(colouredImage, (0, 0), special_flags=pygame.BLEND_MULT)
-        self.image = finalImage
-        # return finalImage
+        final_image = self.image.copy()
+        final_image.blit(coloured_image, (0, 0), special_flags=pygame.BLEND_MULT)
+        self.image = final_image
+        # return final_image
 
     def jumping(self):
         self.vel_y = -15 - self.bonus_y
@@ -900,7 +870,6 @@ class Wall(pygame.sprite.Sprite):
         self.wall_height2 = -SCREEN_MAX
 
     def draw(self):
-        # wall left
         SCREEN.blit(self.image, (self.rect.x, self.wall_height1))
         SCREEN.blit(self.image_flip, (self.rect.x, self.wall_height2))
 
@@ -925,7 +894,7 @@ class Tile(pygame.sprite.Sprite):
             image = pygame.transform.flip(image, True, False)
 
 
-#create Explosion class
+# create Explosion class
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -942,7 +911,7 @@ class Explosion(pygame.sprite.Sprite):
 
     def update(self):
         explosion_speed = 4
-        #update explosion animation
+        # update explosion animation
         self.counter += 1
 
         if self.counter >= explosion_speed and self.index < len(self.images) - 1:
@@ -950,6 +919,6 @@ class Explosion(pygame.sprite.Sprite):
             self.index += 1
             self.image = self.images[self.index]
 
-        #if the animation is complete, reset animation index
+        # if the animation is complete, reset animation index
         if self.index >= len(self.images) - 1 and self.counter >= explosion_speed:
             self.kill()
