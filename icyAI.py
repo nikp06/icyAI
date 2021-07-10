@@ -90,6 +90,10 @@ def main(genomes, config):
                 CLOCK_SPEED = game.clock_speed
             break
 
+        if game.versus:
+            if game.human_players[0].rect.y > 1000 or game.ai_players[0].rect.y > 1000:
+                break
+
 
 def extract_number(f):
     s = re.findall("\d+$", f)
