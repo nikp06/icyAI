@@ -1,4 +1,3 @@
-
 [NEAT]
 fitness_criterion     = mean
 fitness_threshold     = 1000000
