@@ -10,7 +10,7 @@ I made use of a genetic algorithm called NEAT. NEAT evolves neural network topol
 It is a known method from the domain of reinforcement learning. The concept is further explained in the video. You can also read the initial [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf) or browse through the [NEAT documentation](https://neat-python.readthedocs.io/en/latest/neat_overview.html).
 This repository contains all files needed to train the AI for yourself. You can also let the trained AI play or compete against it in custom made modes of the game.
 Some visualization tools help you follow the training process.
-Solarized dark             |  Solarized Ocean
+Fitness stats             |  Speciation stats
 :-------------------------:|:-------------------------:
 ![](media/TRAINING_PROCESS_avg_fitness50.png)  |  ![](media/TRAINING_PROCESS_speciation50.png)
 
