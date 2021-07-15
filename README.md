@@ -6,51 +6,40 @@ Hello Internet! Welcome to *icyAI* - a project for which I recreated the game Ic
 
 Click [here](https://youtu.be/W6qyRbmr_aA), to see what I did in this project on YouTube.
 
+Download the full project on [itch.io](https://nikp06.itch.io/icyai-icy-tower-ai-vs-human) (only Windows for now).
+
 I made use of a genetic algorithm called NEAT. NEAT evolves neural network topologies through neuroevolution.
 It is a known method from the domain of reinforcement learning. The concept is further explained in the video. You can also read the initial [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf) or browse through the [NEAT documentation](https://neat-python.readthedocs.io/en/latest/neat_overview.html).
-This repository contains all files needed to train the AI for yourself. <br>
-![AI during training](media/training.gif)<br>
-You can also let the trained AI play or compete against it in custom made modes of the game.
-Some visualization tools help you follow the training process.
-Fitness stats             |  Speciation stats
-:-------------------------:|:-------------------------:
-![](media/TRAINING_PROCESS_avg_fitness50.png)  |  ![](media/TRAINING_PROCESS_speciation50.png)
+This repository contains all files needed to train the AI for yourself.
+
+![AI during training](media/training.gif)
 
 ## Description
 
-This repository (hopefully) contains everything you need to play the game for yourself or to train your own Icy Tower AI.
+This repository contains everything you need to play the game for yourself or to train your own Icy Tower AI.
 Feel free to play around with the configuration file. Maybe you'll find a way to make the AI learn even more complex behavior. I'd be curious to know about it in case you do.
 
 ## How to use
 
-For playing the game:
+1. For starting the game:
 ```
 py icyAI.py
 ```
+2. Choose a screen-size (large is recommended, others might change physics of the game)
 
-For training an AI:
-```
-py icyAI.py name train n
-```
-- replace name with the name you want your model to be named
-- replace n with the number after how many runs you want you model to be saved and stats to be saved
+3. Simply navigate through the menu:
+    * PLAY - play for yourself
+    * TRAIN AI - train a new AI and specify how many generations
+    * LET AI PLAY - choose a trained model and let the AI play and specify how many runs
+    * HUMAN VS. AI - choose a trained model and play against this trained AI
+![menu](media/menu2.png)
+      
+4. Enjoy the game and music, play around with the configuration file, experiment with parameters, analyze the statistics, speed up the simulation
 
-For letting a trained AI play:
-```
-py icyAI.py name play n
-```
-- replace name with the specific model that is supposed to play
-- replace n with the number of times you want to let the AI play
+Fitness Stats             |  Speciation Stats       |  Neural Network
+:-------------------------:|:-------------------------:|:-------------------------:
+![](media/TRAINING_PROCESS_avg_fitness50.png)  |  ![](media/TRAINING_PROCESS_speciation50.png)  |  ![](media/NN.png)
 
-For playing against a trained AI:
-
-```
-py icyAI.py name play n versus
-```
-- replace name with the specific model that is supposed to play against you
-- replace n with the number of times you want to let the AI play against you
-
-For adapting the screensize simply change the variable SCREEN_MAX in classes.py. Note that the game was made for size 900. With different sizes the physics might slightly change.
 ## Requirements and modules
 
 - python 3
@@ -60,10 +49,10 @@ For adapting the screensize simply change the variable SCREEN_MAX in classes.py.
 - sys
 - os
 - numpy
+- tkinter
 - random
 - glob
 - visualize
 - re
 - shutil
 - time
-- pynput.keyboard
