@@ -5,7 +5,15 @@ import os
 import neat
 import random
 import numpy as np
+from tkinter import Tk, filedialog
 
+os.environ['SDL_VIDEO_WINDOW_POS'] = str(50) + "," + str(50)
+
+root = Tk()
+root.withdraw()  # Hides small tkinter window.
+root.attributes('-topmost', True)
+
+# def initialize_variables():
 # screen resolution and scaling
 SCREEN_MAX = 900  # 600, 700, 800, 900, 1000
 SCALE1 = SCREEN_MAX * 1 / 500  # 2 vel_x
@@ -33,11 +41,13 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 PALETTE = (GREEN, RED, BLUE, YELLOW)
 WALL_WIDTH = SCALE9
-FONT = pygame.font.SysFont("Sans", 20)
-FONT2 = pygame.font.SysFont("Sans", 50)
+FONT = pygame.font.SysFont("Agency FB", 20, bold=False, italic=False)
+FONT2 = pygame.font.SysFont("Agency FB", 50)
 SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
+
 # loading sprites and conversion
 IMAGE = pygame.image.load(os.path.join('sprites', 'icyMan.png')).convert_alpha()
+IMAGE_OG = IMAGE
 IMAGE_ANTAGONIST = pygame.image.load(os.path.join('sprites', 'icyMan_antagonist.png')).convert_alpha()
 IMAGE = pygame.transform.scale(IMAGE, (int(SCALE8), int(SCALE9)))
 IMAGE_ANTAGONIST = pygame.transform.scale(IMAGE_ANTAGONIST, (int(SCALE8), int(SCALE9)))
@@ -62,11 +72,15 @@ WALL_LEFT = pygame.transform.flip(WALL_RIGHT, True, True)
 WALL_LEFT_FLIP = pygame.transform.flip(WALL_LEFT, False, True)
 wall_height1 = 0
 wall_height2 = -SCREEN_MAX
+PLAYER_WIDTH = SCALE8
+PLAYER_HEIGHT = SCALE9
+pygame.mixer.music.load('theme.mp3')
+pygame.mixer.music.play(loops=-1)
 
 
 class IcyTowerGame:
     def __init__(self, genomes, config, train, ai, versus):
-        pygame.display.set_caption('IcyTower by NikP')
+        pygame.display.set_caption('icyAI - AI learning to play Icy Tower')
         self.explosion_group = pygame.sprite.Group()
         self.mainClock = pygame.time.Clock()
         self.genomes = genomes
@@ -86,12 +100,12 @@ class IcyTowerGame:
             self.reset()
         else:
             self.human_players = [
-                Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - Player.PLAYER_WIDTH - WALL_WIDTH)),
+                Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - PLAYER_WIDTH - WALL_WIDTH)),
                        SCREEN_MAX - SCALE9 - SCALE9)]
 
         if self.versus:
             self.human_players = [
-                Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - Player.PLAYER_WIDTH - WALL_WIDTH)),
+                Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - PLAYER_WIDTH - WALL_WIDTH)),
                        SCREEN_MAX - SCALE9 - SCALE9)]
             self.players = self.ai_players + self.human_players
         else:
@@ -129,7 +143,7 @@ class IcyTowerGame:
         self.popped_tiles = 0
 
     def reset(self):
-        pygame.display.set_caption('IcyTower by NikP')
+        pygame.display.set_caption('icyAI - AI learning to play Icy Tower')
         self.mainClock = pygame.time.Clock()
 
         for _, g in self.genomes:
@@ -138,7 +152,7 @@ class IcyTowerGame:
             # net.reset()
             self.nets.append(net)
             self.ai_players.append(
-                Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - Player.PLAYER_WIDTH - WALL_WIDTH)),
+                Player(random.randint(int(WALL_WIDTH), int(SCREEN_MAX - PLAYER_WIDTH - WALL_WIDTH)),
                        SCREEN_MAX - SCALE9 - SCALE9))
             # print(g.species_id)
             # if not g.fitness:
@@ -350,7 +364,7 @@ class IcyTowerGame:
                 elif player.current_y <= 0:
                     drop_speed += 15
             player.current_y += drop_speed
-            if player.current_y >= SCREEN_MAX - player.PLAYER_HEIGHT:
+            if player.current_y >= SCREEN_MAX - PLAYER_HEIGHT:
                 players.pop(x)
                 self.ge[x].fitness -= 500
                 self.nets.pop(x)
@@ -465,7 +479,7 @@ class IcyTowerGame:
                 c = 10
             # print(c)
             for idx, tile in enumerate(self.tiles[start-c:start+10]):
-            # for idx, tile in enumerate(self.tiles):
+                # for idx, tile in enumerate(self.tiles):
                 if player.rect.colliderect(tile):
                     if player.rect.bottom - tile.rect.top < 21 and player.dy >= 0:
                         if start != 0:
@@ -479,7 +493,7 @@ class IcyTowerGame:
                         player.current_height = tile.rect.top + 1
                         break
 
-            if (player.rect.x <= WALL_WIDTH) or (player.rect.x+player.PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
+            if (player.rect.x <= WALL_WIDTH) or (player.rect.x+PLAYER_WIDTH >= SCREEN_MAX-WALL_WIDTH):
                 player.switch = True
 
     def update_tiles(self):
@@ -658,8 +672,8 @@ class IcyTowerGame:
                             pygame.draw.polygon(SCREEN, self.colors[idx], star)
 
     def add_particles(self, player):
-        add_x = player.rect.x + random.randint(0, int(player.PLAYER_WIDTH))
-        add_y = player.rect.y + player.PLAYER_HEIGHT
+        add_x = player.rect.x + random.randint(0, int(PLAYER_WIDTH))
+        add_y = player.rect.y + PLAYER_HEIGHT
         pointlist = [(8.25, 7.55), (10.0, 1.0), (11.75, 7.55), (18.55, 7.2), (12.85, 10.95), (15.3, 17.3),
                      (10.0, 13.0), (4.7, 17.3), (7.15, 10.95), (1.45, 7.2)]
 
@@ -687,8 +701,8 @@ class IcyTowerGame:
 
 # player class
 class Player(pygame.sprite.Sprite):
-    PLAYER_WIDTH = SCALE8
-    PLAYER_HEIGHT = SCALE9
+    # PLAYER_WIDTH = SCALE8
+    # PLAYER_HEIGHT = SCALE9
     ROTATION = 25
 
     def __init__(self, x, y):
@@ -696,7 +710,7 @@ class Player(pygame.sprite.Sprite):
         self.start_pos = [x, y]
         self.image = IMAGE
         self.og_image = self.image
-        self.rect = pygame.Rect(x, y, self.PLAYER_WIDTH, self.PLAYER_HEIGHT)
+        self.rect = pygame.Rect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT)
         self.tick_count = 0
         self.tilt = 0
         self.current_floor = 0
@@ -786,7 +800,7 @@ class Player(pygame.sprite.Sprite):
             self.switch_count = 0
             # put player next to wall so there are no bugs
             if self.rect.x > SCREEN_MAX/2:  # for right switch
-                self.rect.x = SCREEN_MAX-WALL_WIDTH-self.PLAYER_WIDTH
+                self.rect.x = SCREEN_MAX-WALL_WIDTH-PLAYER_WIDTH
             else:  # for left switch
                 self.rect.x = WALL_WIDTH
             self.switching = True
@@ -922,3 +936,346 @@ class Explosion(pygame.sprite.Sprite):
         # if the animation is complete, reset animation index
         if self.index >= len(self.images) - 1 and self.counter >= explosion_speed:
             self.kill()
+
+
+def menu():
+    pygame.display.set_caption('icyAI - AI learning to play Icy Tower')
+    global SCREEN
+    tilt = 0
+    turn = True
+    font = pygame.font.SysFont("Agency FB", 20, bold=True, italic=False)
+    if SCREEN_MAX == 900:
+        c = 0
+    elif SCREEN_MAX == 750:
+        c = 25
+    else:
+        c = 50
+    play_box = pygame.Rect(100-c, 100, 140, 32)
+    train_ai_box = pygame.Rect(100-c, 200-c, 140, 32)
+    play_ai_box = pygame.Rect(100-c, 300-c*2, 140, 32)
+    versus_box = pygame.Rect(100-c, 400-c*3, 140, 32)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = GREEN
+    white = (245, 245, 245)
+    active = True
+    play = False
+    play_ai = False
+    train_ai = False
+    versus = False
+    open_file = None
+    clock = pygame.time.Clock()
+    SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
+    path = os.path.join(str(root), 'trained_models')
+    if c > 0:
+        im = pygame.transform.smoothscale(IMAGE_OG, (int(IMAGE_OG.get_width()/(c/25+1)), int(IMAGE_OG.get_height()/(c/25+1))))
+    else:
+        im = pygame.transform.smoothscale(IMAGE_OG, (int(IMAGE_OG.get_width()*0.8), int(IMAGE_OG.get_height()*0.8)))
+    while active:
+        SCREEN.fill((0, 0, 0))
+        SCREEN.blit(BG, (0, 0))
+        rot_image = pygame.transform.rotate(im, tilt)
+        new_rect = rot_image.get_rect(center=rot_image.get_rect(topleft=(450-c*2, 100)).center)
+        SCREEN.blit(rot_image, new_rect)
+        if turn:
+            tilt += .5
+            if tilt == 50:
+                turn = False
+        else:
+            tilt -= .5
+            if tilt == -50:
+                turn = True
+
+        # If the user clicked on the play_box rect.
+        if play_box.collidepoint(pygame.mouse.get_pos()):
+            # Toggle the active variable.
+            play = True
+            train_ai = False
+            play_ai = False
+            versus = False
+        elif train_ai_box.collidepoint(pygame.mouse.get_pos()):
+            play = False
+            train_ai = True
+            play_ai = False
+            versus = False
+        elif play_ai_box.collidepoint(pygame.mouse.get_pos()):
+            play = False
+            train_ai = False
+            play_ai = True
+            versus = False
+        elif versus_box.collidepoint(pygame.mouse.get_pos()):
+            play = False
+            train_ai = False
+            play_ai = False
+            versus = True
+        else:
+            play = False
+            train_ai = False
+            play_ai = False
+            versus = False
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # If the user clicked on the play_box rect.
+                if play_box.collidepoint(event.pos):
+                    print("Play the game")
+                    play = True
+                    open_file = None
+                    active = False
+                if train_ai_box.collidepoint(event.pos):
+                    print("Train the AI")
+                    open_file = None
+                    train_ai = True
+                    active = False
+                if play_ai_box.collidepoint(event.pos):
+                    open_file = filedialog.askdirectory(mustexist=False, initialdir=path,
+                                                        title='Choose a model')  # Returns path as str
+                    print("Let ai play")
+                    play_ai = True
+                if versus_box.collidepoint(event.pos):
+                    open_file = filedialog.askdirectory(mustexist=False, initialdir=path,
+                                                        title='Choose a model')  # Returns path as str
+                    print("Play against ai")
+                    versus = True
+                if open_file != '':
+                    active = False
+
+        # Change the current color of the input box.
+        # color = color_active if active else color_inactive
+
+        # Render the current text.
+        txt_surface1 = font.render('PLAY', True, color_active if play else color_inactive)
+        txt_surface2 = font.render('TRAIN AI', True, color_active if train_ai else color_inactive)
+        txt_surface3 = font.render('LET AI PLAY', True, color_active if play_ai else color_inactive)
+        txt_surface4 = font.render('HUMAN VS. AI', True, color_active if versus else color_inactive)
+        # Resize the box if the text is too long.
+        width = max(200, txt_surface1.get_width() + 10)
+        play_box.w = width
+        train_ai_box.w = width
+        play_ai_box.w = width
+        versus_box.w = width
+
+        controls1 = font.render('LEFT and RIGHT Keys to run; SPACE to Jump', True, white)
+        controls2 = font.render('Press ENTER to enter simulation speeding', True, white)
+        controls3 = font.render('Press +/- to increase/decrease simulation speed', True, white)
+        controls4 = font.render('Trained models saved in /trained_models/model1,2,3,...', True, white)
+        controls5 = font.render('Stats saved in this folder every 5 gens', True, white)
+        controls6 = font.render('Change config_file.txt to train with different params', True, white)
+
+        SCREEN.blit(controls1, (SCREEN_MAX / 2 - controls1.get_width() / 2, versus_box.y + 200-c*2))
+        SCREEN.blit(controls2, (SCREEN_MAX / 2 - controls2.get_width() / 2, versus_box.y + 230-c*2))
+        SCREEN.blit(controls3, (SCREEN_MAX / 2 - controls3.get_width() / 2, versus_box.y + 260-c*2))
+        SCREEN.blit(controls4, (SCREEN_MAX / 2 - controls4.get_width() / 2, versus_box.y + 290-c*2))
+        SCREEN.blit(controls5, (SCREEN_MAX / 2 - controls5.get_width() / 2, versus_box.y + 320-c*2))
+        SCREEN.blit(controls6, (SCREEN_MAX / 2 - controls6.get_width() / 2, versus_box.y + 350-c*2))
+        # Blit the text.
+        SCREEN.blit(txt_surface1, (play_box.x + 5, play_box.y + 5))
+        SCREEN.blit(txt_surface2, (train_ai_box.x + 5, train_ai_box.y + 5))
+        SCREEN.blit(txt_surface3, (play_ai_box.x + 5, play_ai_box.y + 5))
+        SCREEN.blit(txt_surface4, (versus_box.x + 5, versus_box.y + 5))
+        # Blit the play_box rect.
+        pygame.draw.rect(SCREEN, color_active if play else color_inactive, play_box, 2)
+        pygame.draw.rect(SCREEN, color_active if train_ai else color_inactive, train_ai_box, 2)
+        pygame.draw.rect(SCREEN, color_active if play_ai else color_inactive, play_ai_box, 2)
+        pygame.draw.rect(SCREEN, color_active if versus else color_inactive, versus_box, 2)
+        pygame.display.update()
+        clock.tick(60)
+    return open_file, play, play_ai, train_ai, versus
+
+
+def screen_options():
+    pygame.display.set_caption('icyAI - AI learning to play Icy Tower')
+    screen = pygame.display.set_mode((800, 400), 0, 32)
+    # font = pygame.font.Font(None, 32)
+    font = pygame.font.SysFont("Agency FB", 20, bold=True, italic=False)
+    query_box = pygame.Rect(30, 100, 140, 32)
+    small_box = pygame.Rect(30, 200, 140, 32)
+    medium_box = pygame.Rect(280, 200, 140, 32)
+    large_box = pygame.Rect(530, 200, 140, 32)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = GREEN
+
+    while True:
+        screen.fill((0, 0, 0))
+        screen.blit(BG, (0, 0))
+        # pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # If the user clicked on the play_box rect.
+                if small_box.collidepoint(event.pos):
+                    print("small")
+                    return 600
+
+                if medium_box.collidepoint(event.pos):
+                    print("medium")
+                    return 750
+
+                if large_box.collidepoint(event.pos):
+                    print("large")
+                    return 900
+
+        if small_box.collidepoint(pygame.mouse.get_pos()):
+            # Toggle the active variable.
+            small = True
+            medium = False
+            large = False
+        elif medium_box.collidepoint(pygame.mouse.get_pos()):
+            small = False
+            medium = True
+            large = False
+        elif large_box.collidepoint(pygame.mouse.get_pos()):
+            small = False
+            medium = False
+            large = True
+        else:
+            small = False
+            medium = False
+            large = False
+
+        # Render the current text.
+        txt_surface1 = font.render('Choose screen size', True, color_inactive)
+        txt_surface2 = font.render('small', True, color_active if small else color_inactive)
+        txt_surface3 = font.render('medium', True, color_active if medium else color_inactive)
+        txt_surface4 = font.render('large (recommended)', True, color_active if large else color_inactive)
+
+        # Resize the box if the text is too long.
+        width = max(200, txt_surface4.get_width() + 10)
+        small_box.w = width
+        medium_box.w = width
+        large_box.w = width
+        query_box.w = max(200, txt_surface1.get_width() + 10)
+        # Blit the text.
+        screen.blit(txt_surface1, (query_box.x + 5, query_box.y + 5))
+        screen.blit(txt_surface2, (small_box.x + 5, small_box.y + 5))
+        screen.blit(txt_surface3, (medium_box.x + 5, medium_box.y + 5))
+        screen.blit(txt_surface4, (large_box.x + 5, large_box.y + 5))
+        # Blit the play_box rect.
+        pygame.draw.rect(screen, color_inactive, query_box, 2)
+        pygame.draw.rect(screen, color_active if small else color_inactive, small_box, 2)
+        pygame.draw.rect(screen, color_active if medium else color_inactive, medium_box, 2)
+        pygame.draw.rect(screen, color_active if large else color_inactive, large_box, 2)
+        pygame.display.update()
+
+
+def specify_amount():
+    global SCREEN
+    screen = pygame.display.set_mode((800, 400), 0, 32)
+    font = pygame.font.SysFont("Agency FB", 20, bold=True, italic=False)
+    query_box = pygame.Rect(100, 100, 140, 32)
+    amount_box = pygame.Rect(100, 200, 140, 32)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = GREEN
+    text = 'specify amount'
+    amount = False
+    while True:
+        screen.fill((0, 0, 0))
+        screen.blit(BG, (0, 0))
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    try:
+                        if int(text) >= 5:
+                            SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
+                            return int(text)
+                    except:
+                        text = 'number needed (>=5)'
+                elif event.key == pygame.K_BACKSPACE:
+                    if text == 'specify amount' or text == 'number needed (>=5)':
+                        text = ''
+                    text = text[:-1]
+                else:
+                    if text == 'specify amount' or text == 'number needed (>=5)':
+                        text = ''
+                    text += event.unicode
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # If the user clicked on the play_box rect.
+                if amount_box.collidepoint(event.pos):
+                    if text == 'specify amount' or text == 'number needed (>=5)':
+                        text = ''
+
+            if amount_box.collidepoint(pygame.mouse.get_pos()):
+                # Toggle the active variable.
+                amount = True
+            else:
+                amount = False
+
+        # Render the current text.
+        txt_surface1 = font.render('How many generations/plays?', True, color_inactive)
+        txt_surface2 = font.render(text, True, color_active if amount else color_inactive)
+
+        # Resize the box if the text is too long.
+        width = max(200, txt_surface1.get_width() + 10)
+        query_box.w = width
+        amount_box.w = width
+
+        # Blit the text.
+        screen.blit(txt_surface1, (query_box.x + 5, query_box.y + 5))
+        screen.blit(txt_surface2, (amount_box.x + 5, amount_box.y + 5))
+        # Blit the play_box rect.
+        pygame.draw.rect(screen, color_inactive, query_box, 2)
+        pygame.draw.rect(screen, color_active if amount else color_inactive, amount_box, 2)
+        pygame.display.update()
+
+
+def update_variables(screen_size):
+    SCREEN_MAX = screen_size  # 600, 700, 800, 900, 1000
+    SCALE1 = SCREEN_MAX * 1 / 500  # 2 vel_x
+    SCALE2 = SCREEN_MAX * 1 / 250  # 4 bonus y 1
+    SCALE3 = SCREEN_MAX * 3 / 500  # 6 vel_x threshold for bonus y 1
+    SCALE4 = SCREEN_MAX * 1 / 125  # 8 bonus y 2
+    SCALE5 = SCREEN_MAX * 3 / 250  # 12 vel_x threshold for bonus y 2
+    SCALE6 = SCREEN_MAX * 2 / 125  # 16 bonus y 3
+    SCALE7 = SCREEN_MAX * 1 / 50  # 20 vel_x threshold for bonus y 3; max speed; vel_y gain when jumping
+    SCALE8 = SCREEN_MAX * 3 / 100  # 30
+    SCALE9 = SCREEN_MAX * 1 / 20  # 50 wall width; player height
+    SCALE10 = SCREEN_MAX * 3 / 20  # 150 distance between tiles
+    SCALE11 = SCREEN_MAX * 1 / 5  # 200 left boundary for switch to end; min tile width
+    SCALE12 = SCREEN_MAX * 1 / 2.5  # 400 max tile width
+    SCALE13 = SCREEN_MAX * 1 / 2  # 500 when dropping first starts
+    SCALE14 = SCREEN_MAX * 4 / 5  # 800 right boundary for switch to end
+    SCALE15 = SCREEN_MAX * 9 / 10  # 9000
+
+    WALL_WIDTH = SCALE9
+
+    SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
+
+    # loading sprites and conversion
+    IMAGE = pygame.image.load(os.path.join('sprites', 'icyMan.png')).convert_alpha()
+    IMAGE_OG = IMAGE
+    IMAGE_ANTAGONIST = pygame.image.load(os.path.join('sprites', 'icyMan_antagonist.png')).convert_alpha()
+    IMAGE = pygame.transform.scale(IMAGE, (int(SCALE8), int(SCALE9)))
+    IMAGE_ANTAGONIST = pygame.transform.scale(IMAGE_ANTAGONIST, (int(SCALE8), int(SCALE9)))
+    IMAGE2 = pygame.image.load(os.path.join('sprites', 'icyMan2.png')).convert_alpha()
+    IMAGE2 = pygame.transform.scale(IMAGE2, (int(SCALE8), int(SCALE9)))
+    IMAGE3 = pygame.image.load(os.path.join('sprites', 'icyMan3.png')).convert_alpha()
+    IMAGE3 = pygame.transform.scale(IMAGE3, (int(SCALE8), int(SCALE9)))
+    IMAGE4 = pygame.image.load(os.path.join('sprites', 'icyMan4.png')).convert_alpha()
+    IMAGE4 = pygame.transform.scale(IMAGE4, (int(SCALE8), int(SCALE9)))
+    IMAGE5 = pygame.image.load(os.path.join('sprites', 'icyMan5.png')).convert_alpha()
+    IMAGE5 = pygame.transform.scale(IMAGE5, (int(SCALE8), int(SCALE9)))
+    COLOR_IMAGE = pygame.Surface(IMAGE.get_size()).convert_alpha()
+    COLOR_IMAGE.fill(RED)
+    ICY_IMAGES = [IMAGE, IMAGE2, IMAGE3, IMAGE4, IMAGE5]
+    ICE = pygame.image.load(os.path.join('sprites', 'icy2.png')).convert_alpha()
+    BG = pygame.image.load(os.path.join('sprites', 'background.jpg'))
+    BG = pygame.transform.scale(BG, (SCREEN_MAX, SCREEN_MAX))
+    WALL_RIGHT = pygame.image.load(os.path.join('sprites', 'wall2.png'))
+    WALL_RIGHT = pygame.transform.scale(WALL_RIGHT, (int(WALL_WIDTH), SCREEN_MAX))
+    WALL_RIGHT_FLIP = pygame.transform.flip(WALL_RIGHT, False, True)
+    WALL_LEFT = pygame.transform.flip(WALL_RIGHT, True, True)
+    WALL_LEFT_FLIP = pygame.transform.flip(WALL_LEFT, False, True)
+    wall_height1 = 0
+    wall_height2 = -SCREEN_MAX
+    PLAYER_WIDTH = SCALE8
+    PLAYER_HEIGHT = SCALE9
+    globals().update(locals())
