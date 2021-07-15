@@ -1228,6 +1228,7 @@ def specify_amount():
 
 
 def update_variables(screen_size):
+    # TODO: change so I don't have to use globals
     SCREEN_MAX = screen_size  # 600, 700, 800, 900, 1000
     SCALE1 = SCREEN_MAX * 1 / 500  # 2 vel_x
     SCALE2 = SCREEN_MAX * 1 / 250  # 4 bonus y 1
