@@ -8,9 +8,13 @@ Click [here](https://youtu.be/W6qyRbmr_aA), to see what I did in this project on
 
 I made use of a genetic algorithm called NEAT. NEAT evolves neural network topologies through neuroevolution.
 It is a known method from the domain of reinforcement learning. The concept is further explained in the video. You can also read the initial [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf) or browse through the [NEAT documentation](https://neat-python.readthedocs.io/en/latest/neat_overview.html).
-This repository contains all files needed to train the AI for yourself.
-
-![AI during training](media/training.gif)
+This repository contains all files needed to train the AI for yourself. <br>
+![AI during training](media/training.gif)<br>
+You can also let the trained AI play or compete against it in custom made modes of the game.
+Some visualization tools help you follow the training process.
+Fitness stats             |  Speciation stats
+:-------------------------:|:-------------------------:
+![](media/TRAINING_PROCESS_avg_fitness50.png)  |  ![](media/TRAINING_PROCESS_speciation50.png)
 
 ## Description
 
@@ -45,6 +49,8 @@ py icyAI.py name play n versus
 ```
 - replace name with the specific model that is supposed to play against you
 - replace n with the number of times you want to let the AI play against you
+
+For adapting the screensize simply change the variable SCREEN_MAX in classes.py. Note that the game was made for size 900. With different sizes the physics might slightly change.
 ## Requirements and modules
 
 - python 3
