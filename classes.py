@@ -1172,7 +1172,7 @@ def specify_amount():
     amount_box = pygame.Rect(100, 200, 140, 32)
     color_inactive = pygame.Color('lightskyblue3')
     color_active = GREEN
-    text = 'specify amount'
+    text = 'specify amount (>=5)'
     amount = False
     while True:
         screen.fill((0, 0, 0))
@@ -1184,23 +1184,23 @@ def specify_amount():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     try:
-                        if int(text) >= 5:
-                            SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
-                            return int(text)
+                        assert int(text) >= 5
+                        SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
+                        return int(text)
                     except:
                         text = 'number needed (>=5)'
                 elif event.key == pygame.K_BACKSPACE:
-                    if text == 'specify amount' or text == 'number needed (>=5)':
+                    if text == 'specify amount (>=5)' or text == 'number needed (>=5)':
                         text = ''
                     text = text[:-1]
                 else:
-                    if text == 'specify amount' or text == 'number needed (>=5)':
+                    if text == 'specify amount (>=5)' or text == 'number needed (>=5)':
                         text = ''
                     text += event.unicode
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # If the user clicked on the play_box rect.
                 if amount_box.collidepoint(event.pos):
-                    if text == 'specify amount' or text == 'number needed (>=5)':
+                    if text == 'specify amount (>=5)' or text == 'number needed (>=5)':
                         text = ''
 
             if amount_box.collidepoint(pygame.mouse.get_pos()):
