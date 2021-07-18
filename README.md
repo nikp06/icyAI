@@ -6,7 +6,7 @@ Hello Internet! Welcome to *icyAI* - a project for which I recreated the game Ic
 
 Click [here](https://youtu.be/W6qyRbmr_aA), to see what I did in this project on YouTube.
 
-Download the full project on [itch.io](https://nikp06.itch.io/icyai-icy-tower-ai-vs-human) (only Windows for now).
+Download the full project on [itch.io](https://nikp06.itch.io/icyai-icy-tower-ai-vs-human) (only Windows for now/I would appreciate someone making a mac or linux build and sending it to me :P -> I used pyinstaller on my windows machine).
 
 I made use of a genetic algorithm called NEAT. NEAT evolves neural network topologies through neuroevolution.
 It is a known method from the domain of reinforcement learning. The concept is further explained in the video. You can also read the initial [NEAT paper](http://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf) or browse through the [NEAT documentation](https://neat-python.readthedocs.io/en/latest/neat_overview.html).
