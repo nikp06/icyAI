@@ -32,6 +32,7 @@ SCALE13 = SCREEN_MAX * 1 / 2  # 500 when dropping first starts
 SCALE14 = SCREEN_MAX * 4 / 5  # 800 right boundary for switch to end
 SCALE15 = SCREEN_MAX * 9 / 10  # 9000
 pygame.init()
+pygame.font.init()
 
 # colors
 TEXT_COLOR = (255, 255, 255)
@@ -41,8 +42,8 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 PALETTE = (GREEN, RED, BLUE, YELLOW)
 WALL_WIDTH = SCALE9
-FONT = pygame.font.SysFont("Agency FB", 20, bold=False, italic=False)
-FONT2 = pygame.font.SysFont("Agency FB", 50)
+FONT = pygame.font.Font(os.path.join('fonts', 'agency_fb.ttf'), 20)
+FONT2 = pygame.font.Font(os.path.join('fonts', 'agency_fb.ttf'), 50)
 SCREEN = pygame.display.set_mode((SCREEN_MAX, SCREEN_MAX), 0, 32)
 
 # loading sprites and conversion
@@ -74,7 +75,7 @@ wall_height1 = 0
 wall_height2 = -SCREEN_MAX
 PLAYER_WIDTH = SCALE8
 PLAYER_HEIGHT = SCALE9
-pygame.mixer.music.load('theme.mp3')
+pygame.mixer.music.load(os.path.join('music', 'theme.mp3'))
 pygame.mixer.music.play(loops=-1)
 
 
@@ -943,7 +944,9 @@ def menu():
     global SCREEN
     tilt = 0
     turn = True
-    font = pygame.font.SysFont("Agency FB", 20, bold=True, italic=False)
+    font = FONT
+    font.bold = True
+    font.italic = False
     if SCREEN_MAX == 900:
         c = 0
     elif SCREEN_MAX == 750:
@@ -1090,7 +1093,9 @@ def screen_options():
     pygame.display.set_caption('icyAI - AI learning to play Icy Tower')
     screen = pygame.display.set_mode((800, 400), 0, 32)
     # font = pygame.font.Font(None, 32)
-    font = pygame.font.SysFont("Agency FB", 20, bold=True, italic=False)
+    font = FONT
+    font.bold = True
+    font.italic = False
     query_box = pygame.Rect(30, 100, 140, 32)
     small_box = pygame.Rect(30, 200, 140, 32)
     medium_box = pygame.Rect(280, 200, 140, 32)
@@ -1167,7 +1172,9 @@ def screen_options():
 def specify_amount():
     global SCREEN
     screen = pygame.display.set_mode((800, 400), 0, 32)
-    font = pygame.font.SysFont("Agency FB", 20, bold=True, italic=False)
+    font = FONT
+    font.bold = True
+    font.bold = False
     query_box = pygame.Rect(100, 100, 140, 32)
     amount_box = pygame.Rect(100, 200, 140, 32)
     color_inactive = pygame.Color('lightskyblue3')
