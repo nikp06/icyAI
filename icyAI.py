@@ -2,7 +2,7 @@ import pickle
 import neat
 import os
 import glob
-import visualize
+# import visualize
 import re
 import shutil
 import time
@@ -187,12 +187,12 @@ def run(config_path, open_file, play_ai, train_ai, versus, runs):
                 print(f"\nTraining in process for given model '{model_name}' for {n} runs...")
                 winner = P.run(main, 5)
 
-                visualize.draw_net(config, winner, False, filename=os.path.join(model_name, model_name[15:] + '_' + str(GENERATION)),
-                                   node_names=node_names)
-                visualize.plot_stats(stats, ylog=False, view=False,
-                                     filename=os.path.join(model_name, model_name[15:] + '_avg_fitness' + str(GENERATION)))
-                visualize.plot_species(stats, view=False,
-                                       filename=os.path.join(model_name, model_name[15:] + '_speciation' + str(GENERATION)))
+                # visualize.draw_net(config, winner, False, filename=os.path.join(model_name, model_name[15:] + '_' + str(GENERATION)),
+                #                    node_names=node_names)
+                # visualize.plot_stats(stats, ylog=False, view=False,
+                #                      filename=os.path.join(model_name, model_name[15:] + '_avg_fitness' + str(GENERATION)))
+                # visualize.plot_species(stats, view=False,
+                #                        filename=os.path.join(model_name, model_name[15:] + '_speciation' + str(GENERATION)))
                 # checkpointer.save_checkpoint(config, P.population, P.species, P.generation)
                 with open(os.path.join(model_name, model_name[15:] + '_' + str(GENERATION) + '.pkl'), "wb") as f:
                     pickle.dump(winner, f)
