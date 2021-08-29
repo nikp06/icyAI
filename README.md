@@ -2,7 +2,7 @@
 
 Hello Internet! Welcome to *icyAI* - a project for which I recreated the game Icy Tower in Python with Pygame and built an AI that learns how to play it - here you can do so to.
 
-[![Thumbnail](media/thumb6.png)](https://youtu.be/W6qyRbmr_aA)
+[![Thumbnail](media/cover2.png)](https://youtu.be/W6qyRbmr_aA)
 
 Click [here](https://youtu.be/W6qyRbmr_aA), to see what I did in this project on YouTube.
 
